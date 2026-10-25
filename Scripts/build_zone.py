@@ -31,21 +31,26 @@ MATERIAL_SOLID = "/Game/Astonia/Materials/M_PlaceholderSolid"
 LAYOUTS = {
     "1": {
         "placements": [
-            ("Thieves' Guild", (160, 212), (108, 92), -1, 600, False),
+            # The Thieves' Guild (160,212) is hand-built under its guildhouse by build_thieves_guild.py.
             ("Robber cave", (31, 237), (244, 78), -1, 600, False),
             ("Mage's cellar tunnels", (184, 226), (138, 136), -1, 600, False),
             ("Guard quarters", (36, 221), (112, 107), -1, 1200, False),
-            ("Crypt cavern", (101, 211), (195, 231), 2, 1200, True),   # behind a secret door in the tunnels
+            ("Crypt cavern", (101, 211), (195, 231), 1, 1200, True),   # behind a secret door in the tunnels
             ("Skeleton cave", (38, 232), (85, 83), -1, 1800, False),
         ],
         "heights": [],
         # The fort where new characters start (server: tile 126,179) is hand-built by
-        # Scripts/build_fortress.py: the zone leaves these tiles to it (min, max, keep ground).
+        # Scripts/build_fortress.py: the zone leaves these tiles to it (min, max, keep ground
+        # [, content offset in tiles, content depth cm]).
         "replaced": [
             ((112, 165), (142, 193), True),
             ((143, 170), (148, 193), True),
             ((114, 168), (134, 191), False),
             ((134, 176), (145, 191), False),
+            # Thieves' Guild (Scripts/build_thieves_guild.py): guildhouse by the fort's east wall, the
+            # guild's rooms moved under it (GUILD_OFFSET there), forest floor over the old spot.
+            ((148, 177), (155, 185), False),
+            ((148, 208), (183, 254), False, (-9, -29), 600),
         ],
         # Named characters' default skins (DT_Skins rows, Scripts/create_skins.py); others pick from a pool.
         "skins": {
@@ -127,11 +132,15 @@ for lo, hi, h in layout["heights"]:
     heights.append(r)
 
 replaced = []
-for lo, hi, keep_ground in layout.get("replaced", []):
+for entry in layout.get("replaced", []):
+    lo, hi, keep_ground = entry[:3]
     r = unreal.AstoniaReplacedRegion()
     r.set_editor_property("min", point(lo))
     r.set_editor_property("max", point(hi))
     r.set_editor_property("keep_ground", keep_ground)
+    if len(entry) > 3:
+        r.set_editor_property("content_offset", point(entry[3]))
+        r.set_editor_property("content_depth", float(entry[4]))
     replaced.append(r)
 
 zone.set_editor_property("is_spatially_loaded", False)

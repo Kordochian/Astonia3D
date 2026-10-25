@@ -377,15 +377,20 @@ void AAstoniaZoneActor::RebuildFromMap()
 	};
 
 	// Replaced[i]: 0 = built here, 1 = a structure replaces it but the ground stays, 2 = replaced with the ground.
+	// ReplacedBy[i]: the region that moves the tile's content (later regions win).
 	TArray<uint8> Replaced;
 	Replaced.SetNumZeroed(N * N);
-	for (const FAstoniaReplacedRegion& R : ReplacedRegions)
+	TArray<int32> ReplacedBy;
+	ReplacedBy.Init(INDEX_NONE, N * N);
+	for (int32 RI = 0; RI < ReplacedRegions.Num(); RI++)
 	{
+		const FAstoniaReplacedRegion& R = ReplacedRegions[RI];
 		for (int32 Y = FMath::Max(R.Min.Y, 0); Y <= FMath::Min(R.Max.Y, N - 1); Y++)
 		{
 			for (int32 X = FMath::Max(R.Min.X, 0); X <= FMath::Min(R.Max.X, N - 1); X++)
 			{
 				Replaced[Index(X, Y)] = FMath::Max<uint8>(Replaced[Index(X, Y)], R.bKeepGround ? 1 : 2);
+				ReplacedBy[Index(X, Y)] = RI;
 			}
 		}
 	}
@@ -411,6 +416,13 @@ void AAstoniaZoneActor::RebuildFromMap()
 				const bool bCasing = Casing.Contains({Level, I});
 				const float WallH = WallHeightAt(Level, X, Y);
 				const uint8 Replace = Level == 0 ? Replaced[I] : 0;
+				// Where items and spawns of this tile are recorded (moved with a replaced region's content).
+				FVector ContentP = P;
+				if (Replace && ReplacedBy[I] != INDEX_NONE)
+				{
+					const FAstoniaReplacedRegion& R = ReplacedRegions[ReplacedBy[I]];
+					ContentP = TileToLocal(X + R.ContentOffset.X, Y + R.ContentOffset.Y) - FVector(0, 0, R.ContentDepth);
+				}
 
 				if (Replace)
 				{
@@ -470,7 +482,7 @@ void AAstoniaZoneActor::RebuildFromMap()
 				{
 					const FAstoniaItemRow* Row = TileItem[I];
 					const EAstoniaZoneItemKind Kind = Classify(Row);
-					Items.Add({TileItemName[I], Kind, FIntPoint(X, Y), P});
+					Items.Add({TileItemName[I], Kind, FIntPoint(X, Y), ContentP});
 
 					// Holes and ladders inside this zone are replaced by lift shafts.
 					const bool bLocalTeleport = Kind == EAstoniaZoneItemKind::Teleport && Row && TeleportArea(*Row) == 0;
@@ -533,12 +545,12 @@ void AAstoniaZoneActor::RebuildFromMap()
 					{
 						NpcRole = Row->Driver == 72 ? EAstoniaNpcRole::Merchant : EAstoniaNpcRole::QuestGiver;  // 72: trader driver
 					}
-					FAstoniaZoneSpawn& Spawn = Spawns.Add_GetRef({RowName, FIntPoint(X, Y), P, bHostile, NpcRole});
+					FAstoniaZoneSpawn& Spawn = Spawns.Add_GetRef({RowName, FIntPoint(X, Y), ContentP, bHostile, NpcRole});
 					Spawn.DisplayName = Row ? Row->DisplayName : Tile.Character;
 					Spawn.bFemale = Row && Row->HasFlag(TEXT("CF_FEMALE"));
 					if (!CharacterRoles.Contains(NpcRole))
 					{
-						AddInstance(NpcMarkers, FTransform(FQuat::Identity, P + FVector(0, 0, 95.f), FVector(0.8f, 0.8f, 1.9f)),
+						AddInstance(NpcMarkers, FTransform(FQuat::Identity, ContentP + FVector(0, 0, 95.f), FVector(0.8f, 0.8f, 1.9f)),
 							bHostile ? Hostile : Friendly);
 					}
 				}

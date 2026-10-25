@@ -51,6 +51,9 @@ Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepa
   laid out from `cameron.map` (wall lines, gate, galleries, buttresses, trees, props, braziers, floors) plus
   towers, a gatehouse, stairs and a wall walk all the way round. Materials `M_Kit` / `MI_KitStone` /
   `MI_KitPlain` / `M_KitGlow` (stone courses and flagstones in world space, so new art can replace layers later).
+- `Scripts\build_thieves_guild.py` (after `build_zone.py`) builds the Thieves' Guild: a guildhouse against the
+  fortress's east wall and, 6 m under it, the guild's 30 rooms from `cameron.map` (floors, walls, open doors,
+  torches, chests, armchairs, fixed exposure), reached by a stair. Shared helpers live in `Scripts\astonia_kit.py`.
 - `Scripts\shots.ps1 name=X,Y,Z,Yaw ...` runs the game and saves a screenshot from each spot
   (`-AstoniaGoto` / `-AstoniaShot`, development builds only). `-AstoniaFly` hovers for aerial views and
   `-AstoniaRoute=X,Y;X,Y;...` walks waypoints and logs where it got to (checks stairs and doorways).

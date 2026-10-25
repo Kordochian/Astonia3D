@@ -140,6 +140,14 @@ struct FAstoniaReplacedRegion
 	/** Keep the ground tiles (false: the structure lays its own floor). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
 	bool bKeepGround = true;
+
+	/** Where the structure put these tiles (e.g. a basement moved under its entrance): items and spawns
+	 *  in the region are recorded this many tiles away and this far below the surface (cm). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FIntPoint ContentOffset = FIntPoint::ZeroValue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	float ContentDepth = 0.f;
 };
 
 /** A built lift shaft, for the script that places the lift and secret door actors. */
@@ -243,9 +251,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
 	TArray<EAstoniaNpcRole> CharacterRoles = {EAstoniaNpcRole::QuestGiver, EAstoniaNpcRole::Merchant, EAstoniaNpcRole::Thief};
 
-	/** Character templates (name prefixes) that count as thieves: Lydia's thieves in the west woods. */
+	/** Character templates (name prefixes) that count as thieves: Lydia's thieves in the west woods, the Thieves' Guild. */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
-	TArray<FString> ThiefTemplates = {TEXT("wood_thief")};
+	TArray<FString> ThiefTemplates = {TEXT("wood_thief"), TEXT("guild_")};
 
 	/** Default skins (DT_Skins rows) for named characters by template, e.g. knight_castle_lydia -> Fair. */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Look")
