@@ -34,10 +34,15 @@ Controls: WASD move, mouse look, Space jump (gamepad: sticks and A).
   rebuilds `/Game/Astonia/Data/DT_Items` (3,607 rows) and `DT_Characters` (938 rows) from the `.itm`/`.chr` files.
   Row types: `FAstoniaItemRow`, `FAstoniaCharacterRow` in `AstoniaCore/Public/AstoniaDataRows.h`. A template name
   used in more than one zone keeps the first one (generic, then zones by number); later ones are `<name>@<zone>`.
-- `Scripts\create_world.py` recreates `L_World` from the engine's OpenWorld template if it is missing:
+- `Scripts\build_zone.py` (M1) builds an original area into `L_World` as an `AAstoniaZoneActor` (default: Cameron,
+  area 1, at the world origin, PlayerStart on the new-character tile 126,179). The actor stores everything it
+  builds (instanced ground/walls/props/items/NPC markers, torch lights, item and spawn lists), so the game never
+  reads the original files; select it and press "Rebuild From Map" after the map changes.
+- `Scripts\create_world.py` recreates an empty World Partition `L_World` (sky, sun, fog, PlayerStart; no terrain) if it is missing:
   `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>\Scripts\create_world.py"`
 
 ## Plan
 
 See `F:\After_Astonia\mds\UE5-REBUILD-PLAN.md` and the handoff note `F:\After_Astonia\mds\HANDOFF-UE5.md`.
-Phases 0 (skeleton) and 1 (templates into DataTables) are done; next is Phase 2 (build Cameron in the open world).
+Milestone plan: `F:\After_Astonia\mds\MILESTONES-UE5.md`. M0 is done; M1 has started with Cameron, the starter
+zone, in the new open world map.
