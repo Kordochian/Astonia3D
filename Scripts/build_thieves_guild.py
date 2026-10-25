@@ -165,15 +165,9 @@ def guild(b, tiles):
         wx, wy = world_tile(p)
         cx, cy = (wx + 0.5) * T, (wy + 0.5) * T
         if "door" in item:
-            # Doorway in a wall line: lintel above, the leaf stands open against one jamb.
+            # Doorway in a wall line: a door from the kit, standing open.
             along_x = (p[0] - 1, p[1]) not in section and (p[0] + 1, p[1]) not in section
-            b.box(K.TRIM, cx - 100, cy - 100, z0 + 260, cx + 100, cy + 100, z0 + ROOM_H, GUILD_STONE)
-            if along_x:
-                b.box(K.WOOD, cx - 98, cy - 90, z0, cx - 86, cy + 90, z0 + 255, WOOD_DARK)
-                b.box(K.TRIM, cx - 100, cy - 100, z0 + 250, cx + 100, cy - 80, z0 + 270, WOOD)
-            else:
-                b.box(K.WOOD, cx - 90, cy - 98, z0, cx + 90, cy - 86, z0 + 255, WOOD_DARK)
-                b.box(K.TRIM, cx - 100, cy - 100, z0 + 250, cx - 80, cy + 100, z0 + 270, WOOD)
+            kit_door(b, cx, cy, z0, along_x, item, K.STONE, GUILD_STONE, ROOM_H, (p[0] * 73856093) ^ (p[1] * 19349663))
             counts["doors"] += 1
         elif "walltorch" in item:
             d = wall_dir(tiles, p, section)

@@ -51,6 +51,14 @@ enum class EAstoniaKit : uint8
 	RoofPanel,     // 2 x 2 m of shingles, +Y down the slope
 	RoofRidge,
 	Gable,         // unit triangle, scaled per roof end
+	DoorRickety,   // door leaves (Scripts/blender/make_doors.py): pivot at the hinge, 1.5 m wide
+	DoorPlank,
+	DoorFancy,
+	DoorMetal,
+	FrameRickety,  // door frames: one map tile, opening 1.5 m along X
+	FramePlank,
+	FrameFancy,
+	FrameMetal,
 	Count UMETA(Hidden)
 };
 

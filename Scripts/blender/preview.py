@@ -28,7 +28,8 @@ for path in sorted(glob.glob(os.path.join(MESHES, "*.fbx"))):
         x += w + 1.0
         objs.append(o)
 cols = {"Trunk": (0.30, 0.20, 0.12, 1), "Leaves": (0.20, 0.42, 0.14, 1), "Wall": (0.55, 0.53, 0.5, 1), "Trim": (0.75, 0.72, 0.66, 1),
-        "Wood": (0.35, 0.22, 0.12, 1), "Roof": (0.55, 0.22, 0.14, 1), "Plaster": (0.85, 0.8, 0.7, 1)}
+        "Wood": (0.35, 0.22, 0.12, 1), "Roof": (0.55, 0.22, 0.14, 1), "Plaster": (0.85, 0.8, 0.7, 1),
+        "Metal": (0.18, 0.18, 0.2, 1), "Brass": (0.8, 0.6, 0.2, 1)}
 for m in bpy.data.materials:
     base = m.name.split(".")[0]
     m.diffuse_color = cols.get(base, (0.6, 0.58, 0.55, 1))

@@ -215,6 +215,8 @@ TEXTURED = {
     "Flagstone": ("Flagstone", 260.0),
     "Plaster": ("Plaster", 300.0),
     "Timber": ("Timber", 200.0),
+    "Metal": ("Metal", 120.0),     # material slots of models (doors, hinges); no layer of their own
+    "Brass": ("Brass", 80.0),
 }
 
 
@@ -244,6 +246,8 @@ MODEL_MATERIAL = {
     "PlasterWall": "Plaster", "PlasterWindow": "Plaster", "PlasterPost": "Plaster",
     "TimberWall": "Timber", "TimberWindow": "Timber", "TimberPost": "Timber",
     "RoofPanel": "Roof", "RoofRidge": "Roof", "Gable": "Plaster",
+    "DoorRickety": "Wood", "DoorPlank": "Wood", "DoorFancy": "Wood", "DoorMetal": "Metal",
+    "FrameRickety": "Wood", "FramePlank": "Wood", "FrameFancy": "Trim", "FrameMetal": "Trim",
 }
 
 
@@ -296,6 +300,51 @@ def kit_tree(b, x, y, h, kind="tree", collide=True):
     b.piece(kit, (x + jx, y + jy, 0), (100 * s, 100 * s, 100 * s * (0.92 + (h >> 13) % 16 / 100.0)), (0.5, 0.5, 0.5), yaw=h % 360, vary=0.12)
     if collide and kind != "bush":
         b.box(K.BLOCKER, x + jx - 25 * s, y + jy - 25 * s, 0, x + jx + 25 * s, y + jy + 25 * s, 300, (0.5, 0.5, 0.5), vary=0)
+
+
+# Door kit (Scripts/blender/make_doors.py): leaf, frame, frame top in cm (keep in step with FRAME_TOP
+# there), leaf colour, frame colour.
+DOOR_STYLES = {
+    "Rickety": (K.DOOR_RICKETY, K.FRAME_RICKETY, 265.0, (0.40, 0.38, 0.34), (0.36, 0.33, 0.29)),
+    "Plank": (K.DOOR_PLANK, K.FRAME_PLANK, 285.0, (0.30, 0.19, 0.10), (0.24, 0.15, 0.08)),
+    "Fancy": (K.DOOR_FANCY, K.FRAME_FANCY, 345.0, (0.24, 0.10, 0.06), (0.62, 0.60, 0.55)),
+    "Metal": (K.DOOR_METAL, K.FRAME_METAL, 305.0, (0.30, 0.30, 0.31), (0.55, 0.53, 0.50)),
+}
+
+
+def door_style(item):
+    """Door style from the original item name: poor_* rickety, rich_* fancy, steel/guild/skel metal."""
+    if any(k in item for k in ("poor", "mad_door", "robber")):
+        return "Rickety"
+    if "rich" in item:
+        return "Fancy"
+    if any(k in item for k in ("steel", "iron", "guild_door", "skel_door")):
+        return "Metal"
+    return "Plank"
+
+
+def kit_door(b, cx, cy, z0, along_x, item, wall_kit, wall_color, wall_h, h=0):
+    """A door from the kit in one map tile: frame (collision on its jambs), the leaf standing open into
+    the room, and wall above the frame up to wall_h. along_x: the wall line runs along X."""
+    leaf, frame, top, leaf_color, frame_color = DOOR_STYLES[door_style(item)]
+    yaw = 0.0 if along_x else 90.0
+    b.piece(frame, (cx, cy, z0), (100, 100, 100), frame_color, yaw=yaw, vary=0.05)
+    if top < wall_h:
+        b.box(wall_kit, cx - 100, cy - 100, z0 + top, cx + 100, cy + 100, z0 + wall_h, wall_color, vary=0.04)
+    for j0, j1 in ((-100, -75), (75, 100)):   # the jambs block, the 1.5 m opening stays free
+        if along_x:
+            b.box(K.BLOCKER, cx + j0, cy - 100, z0, cx + j1, cy + 100, z0 + top, (0.5, 0.5, 0.5), vary=0)
+        else:
+            b.box(K.BLOCKER, cx - 100, cy + j0, z0, cx + 100, cy + j1, z0 + top, (0.5, 0.5, 0.5), vary=0)
+    # The leaf hangs on the left or right jamb and stands open (72-101 degrees) to one side or the other.
+    opened = 72.0 + h % 30
+    left = (h >> 4) % 2 == 0
+    inward = 1.0 if (h >> 5) % 2 == 0 else -1.0
+    a = math.radians(yaw)
+    hinge = -75.0 if left else 75.0
+    hx, hy = cx + hinge * math.cos(a), cy + hinge * math.sin(a)
+    leaf_yaw = yaw + (inward * opened if left else 180.0 - inward * opened)
+    b.piece(leaf, (hx, hy, z0), (100, 100, 100), leaf_color, yaw=leaf_yaw, vary=0.06)
 
 
 def sconce(b, x, y, z):

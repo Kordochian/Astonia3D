@@ -26,6 +26,7 @@ from astonia_kit import TEXTURED as LAYERS  # noqa: E402  (layer -> texture, rep
 
 # Layers that only ever show their top (floor slabs): one projection is enough.
 FLOORS = {"Ground", "Grass", "Dirt", "Cobble", "Forest", "Planks", "Tiles", "Flagstone"}
+METALLIC = {"Metal": 0.85, "Brass": 1.0}
 # Normal map strength where the painted height is noisy (soft ground reads better flatter).
 NORMAL_STRENGTH = {"Ground": 0.45, "Dirt": 0.45, "Grass": 0.55, "Forest": 0.55, "Leaves": 0.8, "Plaster": 0.6}
 
@@ -192,6 +193,8 @@ def build_master():
     link(c, base, "A")
     mel.connect_material_property(base, "", unreal.MaterialProperty.MP_BASE_COLOR)
     mel.connect_material_property(rough, "", unreal.MaterialProperty.MP_ROUGHNESS)
+    metallic = node(unreal.MaterialExpressionScalarParameter, -550, 100, parameter_name="Metallic", default_value=0.0)
+    mel.connect_material_property(metallic, "", unreal.MaterialProperty.MP_METALLIC)
     mel.connect_material_property(ao, "", unreal.MaterialProperty.MP_AMBIENT_OCCLUSION)
     mel.recompile_material(mat)
     eal.save_asset(MASTER)
@@ -211,6 +214,7 @@ def build_instances(master):
             mel.set_material_instance_texture_parameter_value(mi, param, unreal.load_asset("%s/T_%s%s" % (TEX_DIR, name, suffix)))
         mel.set_material_instance_scalar_parameter_value(mi, "Size", size)
         mel.set_material_instance_scalar_parameter_value(mi, "NormalStrength", NORMAL_STRENGTH.get(layer, 1.0))
+        mel.set_material_instance_scalar_parameter_value(mi, "Metallic", METALLIC.get(layer, 0.0))
         mel.set_material_instance_static_switch_parameter_value(mi, "Triplanar", layer not in FLOORS)
         mel.update_material_instance(mi)
         eal.save_asset(path)

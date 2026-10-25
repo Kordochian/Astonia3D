@@ -455,19 +455,10 @@ def build_roofs(b, s, floors, walls):
     return buildings, roofs
 
 
-def door(b, s, p, style):
+def door(b, s, p, style, item):
     x, y = p
-    cx, cy = (x + 0.5) * T, (y + 0.5) * T
     along_x = s.blocked((x - 1, y)) and s.blocked((x + 1, y))
-    b.box(style[0], cx - 100, cy - 100, 270, cx + 100, cy + 100, WALL_H, style[1])
-    if along_x:
-        b.box(K.WOOD, cx - 98, cy - 85, 0, cx - 84, cy + 85, 265, WOOD_DARK)
-        b.box(K.TRIM, cx - 100, cy - 100, 255, cx + 100, cy - 80, 275, WOOD)
-        b.box(K.TRIM, cx - 100, cy + 80, 255, cx + 100, cy + 100, 275, WOOD)
-    else:
-        b.box(K.WOOD, cx - 85, cy - 98, 0, cx + 85, cy - 84, 265, WOOD_DARK)
-        b.box(K.TRIM, cx - 100, cy - 100, 255, cx - 80, cy + 100, 275, WOOD)
-        b.box(K.TRIM, cx + 80, cy - 100, 255, cx + 100, cy + 100, 275, WOOD)
+    kit_door(b, (x + 0.5) * T, (y + 0.5) * T, 0.0, along_x, item, style[0], style[1], WALL_H, hval(x, y, 11))
 
 
 def lamp_post(b, x, y):
@@ -491,7 +482,7 @@ def build_items(b, s):
         if "door" in it and "teleport" not in it:
             neighbour = next((s.at(q) for q in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)) if s.blocked(q)), None)
             style = wall_style(neighbour["f"]) if neighbour else None
-            door(b, s, p, style or (K.STONE, STONE))
+            door(b, s, p, style or (K.STONE, STONE), it)
             counts["doors"] += 1
         elif "walltorch" in it:
             if s.blocked(p):

@@ -389,6 +389,27 @@ def rock():
     return fine(multiply(img, cracks, 0.5), 49), ImageChops.multiply(surface, cracks)
 
 
+def metal(dark, light, rust, seed):
+    """Worn metal: mottled plate, fine scratches, a little rust or grime in blotches."""
+    img = colorize(fbm(6, 6, seed), dark, light)
+    rnd = random.Random(seed + 1)
+    d = ImageDraw.Draw(img)
+    scratches = [(rnd.uniform(0, N), rnd.uniform(0, N), rnd.uniform(0, math.pi), px(rnd.uniform(8, 40)), rnd.random()) for _ in range(count(700))]
+    w = max(1, int(round(px(0.8))))
+
+    def scratch(dr, dx, dy):
+        for x, y, a, l, t in scratches:
+            if not (-l < x + dx < N + l and -l < y + dy < N + l):
+                continue
+            c = tuple(min(255, int(v * (1.15 + 0.25 * t))) for v in light)
+            dr.line([(x + dx, y + dy), (x + dx + l * math.cos(a), y + dy + l * math.sin(a))], fill=c, width=w)
+    draw_wrapped(scratch)(d)
+    blotch = fbm(5, 5, seed + 2).point(lambda v: 255 if v < 150 else int(255 - (v - 150) * 2.2))
+    rusty = Image.new("RGB", (N, N), rust)
+    img = Image.composite(img, rusty, blotch)
+    return fine(img, seed + 3, 0.1)
+
+
 def macro():
     g = fbm(3, 4, 60)
     os.makedirs(OUT, exist_ok=True)
@@ -413,6 +434,8 @@ def main():
     save("Bark", *bark(), rough=0.9)
     save("Leaves", *leaves(), rough=0.7)
     save("Rock", *rock(), rough=0.85)
+    save("Metal", metal((44, 46, 50), (110, 112, 116), (92, 52, 30), 70), rough=0.5, rough_var=0.25, bump=0.4)
+    save("Brass", metal((120, 84, 30), (214, 170, 84), (70, 64, 40), 80), rough=0.35, rough_var=0.2, bump=0.3)
     macro()
     with open(os.path.join(OUT, "averages.json"), "w") as f:
         json.dump(AVERAGES, f, indent=1, sort_keys=True)

@@ -60,6 +60,14 @@ namespace
 		{TEXT("RoofPanel"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Roof")},
 		{TEXT("RoofRidge"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Roof")},
 		{TEXT("Gable"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Plaster")},
+		{TEXT("DoorRickety"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Wood")},
+		{TEXT("DoorPlank"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Wood")},
+		{TEXT("DoorFancy"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Wood")},
+		{TEXT("DoorMetal"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Metal")},
+		{TEXT("FrameRickety"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Wood")},
+		{TEXT("FramePlank"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Wood")},
+		{TEXT("FrameFancy"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Trim")},
+		{TEXT("FrameMetal"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Trim")},
 	};
 	static_assert(UE_ARRAY_COUNT(KitInfo) == int32(EAstoniaKit::Count), "KitInfo must list every EAstoniaKit");
 

@@ -21,3 +21,5 @@ Content/MSPresets/
 Content/Quixel/
 Content/MWLandscapeAutoMaterial/
 Content/PavingStonesMaterial/
+
+__pycache__/
