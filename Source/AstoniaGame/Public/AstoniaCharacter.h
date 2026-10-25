@@ -34,6 +34,10 @@ protected:
 public:
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
+	/** Look of the player's mannequin (row of DT_Skins). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FName Skin = TEXT("Adventurer");
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<USpringArmComponent> CameraBoom;

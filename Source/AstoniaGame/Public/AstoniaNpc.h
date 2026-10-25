@@ -22,7 +22,7 @@ enum class EAstoniaNpcRole : uint8
 /**
  * A 3D NPC standing where the original map placed it. For now it only stands there with an idle
  * animation, a name tag and (for quest givers) a "!" marker; dialogue and AI come in M3.
- * Body: Epic's UE5 mannequin (Manny, or Quinn for female characters), tinted per character.
+ * Body: Epic's UE5 mannequin (Manny, or Quinn for female characters) with a skin from DT_Skins.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaNpc : public ACharacter
@@ -32,8 +32,8 @@ class ASTONIAGAME_API AAstoniaNpc : public ACharacter
 public:
 	AAstoniaNpc();
 
-	/** Call right after spawning. */
-	void Setup(FName InTemplate, const FString& InDisplayName, EAstoniaNpcRole InRole, bool bFemale);
+	/** Call right after spawning. Skin = row of DT_Skins (see AstoniaSkin.h). */
+	void Setup(FName InTemplate, const FString& InDisplayName, EAstoniaNpcRole InRole, bool bFemale, FName Skin);
 
 	virtual void Tick(float DeltaSeconds) override;
 

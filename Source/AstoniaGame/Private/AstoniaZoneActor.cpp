@@ -147,9 +147,19 @@ void AAstoniaZoneActor::BeginPlay()
 		const FVector Location = GetActorTransform().TransformPosition(Spawn.Location + FVector(0, 0, 100.f));
 		// The original NPCs mostly face the viewer (south-east); turn them that way.
 		const FRotator Facing(0.f, GetActorRotation().Yaw + 90.f, 0.f);
+		// Zone-specific rows are "<template>@<zone>"; skins are keyed by the plain template name.
+		FString TemplateName = Spawn.Character.ToString();
+		TemplateName.Split(TEXT("@"), &TemplateName, nullptr);
+		FName Skin = CharacterSkins.FindRef(FName(*TemplateName));
+		if (Skin.IsNone())
+		{
+			const TArray<FName>& Pool = Spawn.Role == EAstoniaNpcRole::Thief ? ThiefSkins
+				: Spawn.Role == EAstoniaNpcRole::Merchant ? MerchantSkins : QuestGiverSkins;
+			if (!Pool.IsEmpty()) Skin = Pool[GetTypeHash(TemplateName) % Pool.Num()];
+		}
 		if (AAstoniaNpc* Npc = GetWorld()->SpawnActor<AAstoniaNpc>(Location, Facing, Params))
 		{
-			Npc->Setup(Spawn.Character, Spawn.DisplayName, Spawn.Role, Spawn.bFemale);
+			Npc->Setup(Spawn.Character, Spawn.DisplayName, Spawn.Role, Spawn.bFemale, Skin);
 		}
 	}
 }

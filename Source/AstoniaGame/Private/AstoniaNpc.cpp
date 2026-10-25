@@ -1,4 +1,5 @@
 #include "AstoniaNpc.h"
+#include "AstoniaSkin.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
@@ -8,20 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
-
-namespace
-{
-	// Mannequin "Paint Tint" colours. Quest givers get bright robes, thieves near-black.
-	const FLinearColor QuestGiverTints[] = {
-		{0.80f, 0.65f, 0.20f}, {0.20f, 0.35f, 0.80f}, {0.70f, 0.20f, 0.20f}, {0.85f, 0.85f, 0.85f},
-		{0.25f, 0.55f, 0.30f}, {0.50f, 0.25f, 0.65f},
-	};
-	const FLinearColor MerchantTint(0.30f, 0.50f, 0.20f);
-	const FLinearColor ThiefTint(0.05f, 0.05f, 0.06f);
-	const FLinearColor MonsterTint(0.45f, 0.20f, 0.15f);
-}
 
 AAstoniaNpc::AAstoniaNpc()
 {
@@ -61,7 +49,7 @@ AAstoniaNpc::AAstoniaNpc()
 	QuestMarker->SetVisibility(false);
 }
 
-void AAstoniaNpc::Setup(FName InTemplate, const FString& InDisplayName, EAstoniaNpcRole InRole, bool bFemale)
+void AAstoniaNpc::Setup(FName InTemplate, const FString& InDisplayName, EAstoniaNpcRole InRole, bool bFemale, FName Skin)
 {
 	Template = InTemplate;
 	NpcRole = InRole;
@@ -69,21 +57,7 @@ void AAstoniaNpc::Setup(FName InTemplate, const FString& InDisplayName, EAstonia
 	USkeletalMeshComponent* Body = GetMesh();
 	if (bFemale && FemaleBody) Body->SetSkeletalMesh(FemaleBody);
 
-	FLinearColor Tint = MonsterTint;
-	switch (NpcRole)
-	{
-	case EAstoniaNpcRole::QuestGiver: Tint = QuestGiverTints[GetTypeHash(InTemplate.ToString()) % UE_ARRAY_COUNT(QuestGiverTints)]; break;
-	case EAstoniaNpcRole::Merchant: Tint = MerchantTint; break;
-	case EAstoniaNpcRole::Thief: Tint = ThiefTint; break;
-	default: break;
-	}
-	for (int32 Slot = 0; Slot < Body->GetNumMaterials(); Slot++)
-	{
-		if (UMaterialInstanceDynamic* M = Body->CreateDynamicMaterialInstance(Slot))
-		{
-			M->SetVectorParameterValue(TEXT("Paint Tint"), Tint);
-		}
-	}
+	AstoniaSkin::Apply(Body, AstoniaSkin::Find(Skin));
 
 	NameTag->SetText(FText::FromString(InDisplayName));
 	NameTag->SetTextRenderColor(NpcRole == EAstoniaNpcRole::Thief ? FColor(255, 90, 70) : FColor::White);

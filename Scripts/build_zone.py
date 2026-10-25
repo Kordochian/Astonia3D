@@ -48,6 +48,14 @@ LAYOUTS = {
             ((120, 165), (121, 171), 1000),   # gate towers either side of the north entrance
             ((125, 165), (126, 171), 1000),
         ],
+        # Named characters' looks (DT_Skins rows, Scripts/create_skins.py); others pick from a pool.
+        "skins": {
+            "knight_castle_mage": "MageRobe",      # Gwendylon
+            "knight_castle_fighter": "KnightPlate", # Yoakin
+            "knight_castle_lydia": "NobleDress",
+            "knight_castle_james": "Drunkard",
+            "knight_castle_nook": "Guard",
+        },
     },
 }
 
@@ -124,6 +132,7 @@ zone.set_editor_property("map_file", os.path.join(ZONES, ZONE, MAP_NAME).replace
 zone.set_editor_property("zone", ZONE)
 zone.set_editor_property("placements", placements)
 zone.set_editor_property("height_regions", heights)
+zone.set_editor_property("character_skins", {unreal.Name(k): unreal.Name(v) for k, v in layout.get("skins", {}).items()})
 zone.rebuild_from_map()
 
 # Lifts and secret doors are separate actors (they move); rebuild them from the zone's shafts.

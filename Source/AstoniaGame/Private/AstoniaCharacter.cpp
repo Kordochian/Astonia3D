@@ -1,4 +1,5 @@
 #include "AstoniaCharacter.h"
+#include "AstoniaSkin.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
@@ -51,6 +52,7 @@ AAstoniaCharacter::AAstoniaCharacter()
 void AAstoniaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	AstoniaSkin::Apply(GetMesh(), AstoniaSkin::Find(Skin));
 
 #if !UE_BUILD_SHIPPING
 	FString Goto;
