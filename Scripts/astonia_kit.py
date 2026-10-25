@@ -238,11 +238,21 @@ _AVERAGES = _texture_averages()
 _TINT_CACHE = {}
 
 
+# Model layers (Blender kit) whose main material is another layer's: tinted like that layer.
+MODEL_MATERIAL = {
+    "StoneWall": "Stone", "StoneWindow": "Stone", "StonePost": "Stone",
+    "PlasterWall": "Plaster", "PlasterWindow": "Plaster", "PlasterPost": "Plaster",
+    "TimberWall": "Timber", "TimberWindow": "Timber", "TimberPost": "Timber",
+    "RoofPanel": "Roof", "RoofRidge": "Roof", "Gable": "Plaster",
+}
+
+
 def kit_tint(kit):
     """Per-channel factor that turns a wanted colour into the tint for a textured layer, so the piece
     shows that colour on average (the material draws texture x tint x 2). None for plain layers."""
     if kit not in _TINT_CACHE:
         name = _kit_name(kit)
+        name = MODEL_MATERIAL.get(name, name)
         avg = _AVERAGES.get(TEXTURED[name][0]) if name in TEXTURED else None
         _TINT_CACHE[kit] = [0.5 / max(a, 0.02) for a in avg] if avg else None
     return _TINT_CACHE[kit]
@@ -270,6 +280,22 @@ class Builder:
 
     def light(self, x, y, z, intensity=2500.0, radius=1400.0):
         self.actor.add_light(unreal.Vector(x, y, z), intensity, radius, unreal.LinearColor(1.0, 0.68, 0.38, 1.0))
+
+
+def kit_tree(b, x, y, h, kind="tree", collide=True):
+    """One Blender tree model (SM_Kit_Tree*/Bush, Scripts/blender/make_trees.py) at x, y with a random
+    turn and size from the hash h; kind: "tree", "forest" (big) or "bush". The trunk gets a blocker."""
+    if kind == "forest":
+        kit = K.TREE_FOREST
+    elif kind == "bush":
+        kit = K.BUSH
+    else:
+        kit = K.TREE_ROUND if h % 3 else K.TREE_TALL
+    s = 0.8 + (h >> 5) % 45 / 100.0
+    jx, jy = (h >> 3) % 70 - 35, (h >> 9) % 70 - 35
+    b.piece(kit, (x + jx, y + jy, 0), (100 * s, 100 * s, 100 * s * (0.92 + (h >> 13) % 16 / 100.0)), (0.5, 0.5, 0.5), yaw=h % 360, vary=0.12)
+    if collide and kind != "bush":
+        b.box(K.BLOCKER, x + jx - 25 * s, y + jy - 25 * s, 0, x + jx + 25 * s, y + jy + 25 * s, 300, (0.5, 0.5, 0.5), vary=0)
 
 
 def sconce(b, x, y, z):

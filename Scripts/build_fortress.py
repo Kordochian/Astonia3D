@@ -298,11 +298,7 @@ def stair(b, axis, across, bottom, direction, width):
 
 def tree(b, x, y, key, small):
     h = (key * 2654435761) & 0xFFFFFFFF
-    trunk = (160 if small else 260) + (h % 140)
-    crown = (150 if small else 260) + ((h >> 8) % 90)
-    b.piece(K.TRUNK, (x, y, trunk / 2), (30 if small else 40, 30 if small else 40, trunk), BARK)
-    b.piece(K.LEAVES, (x, y, trunk + crown * 0.3), (crown, crown, crown * 0.9), LEAVES, vary=0.12)
-    b.piece(K.LEAVES, (x + crown * 0.2, y - crown * 0.15, trunk + crown * 0.7), (crown * 0.7, crown * 0.7, crown * 0.65), LEAVES, vary=0.12)
+    kit_tree(b, x, y, h, "bush" if small and h % 2 else "tree")
 
 
 def prop(b, x, y, sprite):

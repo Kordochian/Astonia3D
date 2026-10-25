@@ -14,6 +14,8 @@ namespace
 		const TCHAR* Name;
 		const TCHAR* Mesh;
 		bool bCollision;
+		const TCHAR* Model = nullptr;     // SM_Kit_<Model> (default: the layer name)
+		const TCHAR* Material = nullptr;  // MI_Kit_<Material> for the model's "Wall" slot (default: the layer name)
 	};
 
 	// Indexed by EAstoniaKit. Engine basic shapes are 100 cm across and centred on their pivot.
@@ -42,6 +44,22 @@ namespace
 		{TEXT("Plaster"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
 		{TEXT("Timber"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
 		{TEXT("Blocker"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("TreeRound"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), false},
+		{TEXT("TreeTall"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), false},
+		{TEXT("TreeForest"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), false},
+		{TEXT("Bush"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), false},
+		{TEXT("StoneWall"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallStraight"), TEXT("Stone")},
+		{TEXT("StoneWindow"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallWindow"), TEXT("Stone")},
+		{TEXT("StonePost"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallPost"), TEXT("Stone")},
+		{TEXT("PlasterWall"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallStraight"), TEXT("Plaster")},
+		{TEXT("PlasterWindow"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallWindow"), TEXT("Plaster")},
+		{TEXT("PlasterPost"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallPost"), TEXT("Plaster")},
+		{TEXT("TimberWall"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallStraight"), TEXT("Timber")},
+		{TEXT("TimberWindow"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallWindow"), TEXT("Timber")},
+		{TEXT("TimberPost"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, TEXT("WallPost"), TEXT("Timber")},
+		{TEXT("RoofPanel"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Roof")},
+		{TEXT("RoofRidge"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Roof")},
+		{TEXT("Gable"), TEXT("/Engine/BasicShapes/Cube.Cube"), false, nullptr, TEXT("Plaster")},
 	};
 	static_assert(UE_ARRAY_COUNT(KitInfo) == int32(EAstoniaKit::Count), "KitInfo must list every EAstoniaKit");
 
@@ -115,11 +133,29 @@ void AAstoniaBuilding::ClearPieces()
 		if (!Layer) continue;
 		Layer->Modify();
 		Layer->ClearInstances();
-		// Textured kit material by convention, else the placeholder look.
-		const FString Textured = FString::Printf(TEXT("/Game/Astonia/Materials/Kit/MI_Kit_%s.MI_Kit_%s"), KitInfo[Kit].Name, KitInfo[Kit].Name);
-		UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, *Textured, nullptr, LOAD_NoWarn | LOAD_Quiet);
+		// A Blender model for this layer replaces the basic shape when it has been imported.
+		const TCHAR* ModelName = KitInfo[Kit].Model ? KitInfo[Kit].Model : KitInfo[Kit].Name;
+		const FString Model = FString::Printf(TEXT("/Game/Astonia/Meshes/SM_Kit_%s.SM_Kit_%s"), ModelName, ModelName);
+		if (UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, *Model, nullptr, LOAD_NoWarn | LOAD_Quiet))
+		{
+			if (Layer->GetStaticMesh() != Mesh) Layer->SetStaticMesh(Mesh);
+		}
+		auto KitMaterial = [](const FString& Name)
+		{
+			const FString Path = FString::Printf(TEXT("/Game/Astonia/Materials/Kit/MI_Kit_%s.MI_Kit_%s"), *Name, *Name);
+			return LoadObject<UMaterialInterface>(nullptr, *Path, nullptr, LOAD_NoWarn | LOAD_Quiet);
+		};
+		// Textured kit material by convention, else the placeholder look; model slots by slot name.
+		UMaterialInterface* Material = KitMaterial(KitInfo[Kit].Material ? KitInfo[Kit].Material : KitInfo[Kit].Name);
 		if (!Material) Material = Kit == int32(EAstoniaKit::Glow) ? Glow : IsStone(Kit) ? Stone : Plain;
-		if (Material) Layer->SetMaterial(0, Material);
+		const TArray<FName> Slots = Layer->GetMaterialSlotNames();
+		for (int32 Slot = 0; Slot < FMath::Max(1, Slots.Num()); Slot++)
+		{
+			// A model's "Wall" slot takes the layer's material; other named slots MI_Kit_<SlotName>.
+			const bool bNamed = Slots.IsValidIndex(Slot) && (Slots.Num() > 1 || KitInfo[Kit].Model || KitInfo[Kit].Material) && Slots[Slot] != TEXT("Wall");
+			UMaterialInterface* SlotMaterial = bNamed ? KitMaterial(Slots[Slot].ToString()) : nullptr;
+			if (SlotMaterial || Material) Layer->SetMaterial(Slot, SlotMaterial ? SlotMaterial : Material);
+		}
 	}
 	TArray<UActorComponent*> OldLights = GetComponentsByTag(UPointLightComponent::StaticClass(), BuildingLightTag);
 	for (UActorComponent* Old : OldLights)

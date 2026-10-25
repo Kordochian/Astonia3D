@@ -70,6 +70,7 @@ def build_master():
         eal.delete_asset(MASTER)
     mat = tools.create_asset("M_KitPBR", KIT_DIR, unreal.Material, unreal.MaterialFactoryNew())
     mat.set_editor_property("used_with_instanced_static_meshes", True)
+    mat.set_editor_property("used_with_nanite", True)   # Blender models are Nanite meshes
     mat.set_editor_property("tangent_space_normal", False)
     tex = lambda n: unreal.load_asset("%s/%s" % (TEX_DIR, n))
     shared = unreal.SamplerSourceMode.SSM_WRAP_WORLD_GROUP_SETTINGS

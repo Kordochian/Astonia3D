@@ -264,21 +264,11 @@ def build_ground(b, s):
 
 
 def tree(b, x, y, h, big=False):
-    trunk = (300 if big else 240) + h % 180
-    crown = (300 if big else 240) + (h >> 9) % 140
-    jx, jy = (h >> 3) % 70 - 35, (h >> 6) % 70 - 35
-    cx, cy = x + jx, y + jy
-    b.piece(K.TRUNK, (cx, cy, trunk / 2), (44, 44, trunk), BARK)
-    b.piece(K.LEAVES, (cx, cy, trunk + crown * 0.25), (crown, crown, crown * 0.85), LEAVES, vary=0.14)
-    b.piece(K.LEAVES, (cx + crown * 0.18, cy - crown * 0.12, trunk + crown * 0.65), (crown * 0.72, crown * 0.72, crown * 0.62), LEAVES, vary=0.14)
-    if big:
-        b.piece(K.LEAVES, (cx - crown * 0.22, cy + crown * 0.15, trunk + crown * 0.45), (crown * 0.65, crown * 0.65, crown * 0.6), LEAVES, vary=0.14)
+    kit_tree(b, x, y, h, "forest" if big else "tree")
 
 
 def bush(b, x, y, h):
-    r = 120 + h % 60
-    b.piece(K.LEAVES, (x, y, r * 0.35), (r * 1.3, r * 1.3, r * 0.8), LEAVES, vary=0.15)
-    b.piece(K.LEAVES, (x + 30, y - 20, r * 0.6), (r * 0.8, r * 0.8, r * 0.6), LEAVES, vary=0.15)
+    kit_tree(b, x, y, h, "bush")
     b.box(K.BLOCKER, x - 80, y - 80, 0, x + 80, y + 80, 120, LEAVES, vary=0)
 
 
@@ -348,11 +338,29 @@ def build_objects(b, s):
         else:
             prop(b, cx, cy, h)
             counts["props"] += 1
+    # Modular walls (Blender kit): a straight piece where a wall runs on, a post at corners, ends and
+    # junctions, now and then a window in room walls; collision stays a run of blocker boxes.
+    every = set()
+    for cells in walls.values():
+        every |= cells
     for ((kit, color), height), cells in walls.items():
+        straight, window, post = WALL_PIECES[kit]
+        zs = height / 400.0 * 100.0
+        for (x, y) in cells:
+            ex, wx = (x + 1, y) in every, (x - 1, y) in every
+            ny, sy = (x, y - 1) in every, (x, y + 1) in every
+            cx, cy = (x + 0.5) * T, (y + 0.5) * T
+            if (ex or wx) and not (ny or sy):
+                yaw, line = 0.0, ex and wx
+            elif (ny or sy) and not (ex or wx):
+                yaw, line = 90.0, ny and sy
+            else:
+                b.piece(post, (cx, cy, 0), (100, 100, zs), color, vary=0.04)
+                continue
+            piece = window if line and height >= WALL_H and (x * 7 + y * 3) % 4 == 0 else straight
+            b.piece(piece, (cx, cy, 0), (100, 100, zs), color, yaw=yaw, vary=0.04)
         for y, x0, x1 in runs(cells):
-            b.box(kit, x0 * T, y * T, 0, (x1 + 1) * T, (y + 1) * T, height, color, vary=0.04)
-            if height < WALL_H:   # coping on free-standing walls
-                b.box(K.TRIM, x0 * T - 8, y * T - 8, height, (x1 + 1) * T + 8, (y + 1) * T + 8, height + 20, TRIM, vary=0.03)
+            b.box(K.BLOCKER, x0 * T, y * T, 0, (x1 + 1) * T, (y + 1) * T, height, color, vary=0)
             counts["wall runs"] += 1
     for y, x0, x1 in runs(forest):
         b.box(K.BLOCKER, x0 * T, y * T, 0, (x1 + 1) * T, (y + 1) * T, FOREST_H, LEAVES, vary=0)
@@ -360,37 +368,56 @@ def build_objects(b, s):
 
 
 def gable(b, x0, y0, x1, y1, base, color):
+    """Gable roof over a rectangle of tiles from the Blender kit: shingle panels down both slopes,
+    ridge tiles along the top and a plaster gable at each end."""
     X0, Y0, X1, Y1 = x0 * T, y0 * T, (x1 + 1) * T, (y1 + 1) * T
     over = 50.0
     along_x = (X1 - X0) >= (Y1 - Y0)
     short = (Y1 - Y0) if along_x else (X1 - X0)
     half = short / 2 + over
     rise = min(short * 0.42, 520.0)
-    angle = math.degrees(math.atan2(rise, half))
+    angle = math.atan2(rise, half)
     slope = math.hypot(half, rise) + 12
     mx, my = (X0 + X1) / 2, (Y0 + Y1) / 2
-    zc = base + rise / 2 + 8
-    if along_x:
-        length = X1 - X0 + 2 * over
-        for sgn in (-1, 1):
-            b.piece(K.ROOF, (mx, my + sgn * half / 2, zc), (length, slope, 16), color, roll=sgn * angle, vary=0.03)
-        b.box(K.WOOD, X0 - over, my - 12, base + rise - 6, X1 + over, my + 12, base + rise + 18, WOOD_DARK, vary=0)
-    else:
-        length = Y1 - Y0 + 2 * over
-        for sgn in (-1, 1):
-            b.piece(K.ROOF, (mx + sgn * half / 2, my, zc), (slope, length, 16), color, pitch=-sgn * angle, vary=0.03)
-        b.box(K.WOOD, mx - 12, Y0 - over, base + rise - 6, mx + 12, Y1 + over, base + rise + 18, WOOD_DARK, vary=0)
-    # Gable ends: stepped plaster so the roof space is closed.
-    steps = 5
-    for k in range(steps):
-        w = (short) * (1 - (k + 0.5) / steps)
-        z = base + k * rise / steps
-        if along_x:
-            for e0, e1 in ((X0, X0 + 25), (X1 - 25, X1)):
-                b.box(K.PLASTER, e0, my - w / 2, z, e1, my + w / 2, z + rise / steps, (0.60, 0.56, 0.48), vary=0.02)
-        else:
-            for e0, e1 in ((Y0, Y0 + 25), (Y1 - 25, Y1)):
-                b.box(K.PLASTER, mx - w / 2, e0, z, mx + w / 2, e1, z + rise / steps, (0.60, 0.56, 0.48), vary=0.02)
+    ridge_z = base + rise + 6
+    length = (X1 - X0 if along_x else Y1 - Y0) + 2 * over
+    start = (X0 if along_x else Y0) - over
+    n = max(1, int(math.ceil(length / 200.0)))
+    seg_len = length / n
+    m = max(1, int(math.ceil(slope / 200.0)))
+    seg = slope / m
+    ridge_dir = unreal.Vector(1, 0, 0) if along_x else unreal.Vector(0, 1, 0)
+    for sgn in (-1, 1):
+        across = unreal.Vector(0, sgn, 0) if along_x else unreal.Vector(sgn, 0, 0)
+        down = unreal.Vector(across.x * math.cos(angle), across.y * math.cos(angle), -math.sin(angle))
+        # The imported panel runs along local -Y down the slope: local +Y = up the slope.
+        up_slope = unreal.Vector(-down.x, -down.y, -down.z)
+        x_axis = ridge_dir
+        if x_axis.x * up_slope.y - x_axis.y * up_slope.x < 0:   # keep the panel's face (X cross Y) pointing up
+            x_axis = unreal.Vector(-ridge_dir.x, -ridge_dir.y, 0)
+        rot = unreal.MathLibrary.make_rot_from_xy(x_axis, up_slope)
+        for i in range(n):
+            a = start + (i + 0.5) * seg_len
+            for j in range(m):
+                d = j * seg
+                px = (a if along_x else mx) + down.x * d
+                py = (my if along_x else a) + down.y * d
+                pz = ridge_z + down.z * d
+                b.piece(K.ROOF_PANEL, (px, py, pz), (seg_len / 2.0, seg / 2.0, 100), color, yaw=rot.yaw, pitch=rot.pitch, roll=rot.roll, vary=0.04)
+    for i in range(n):
+        a = start + (i + 0.5) * seg_len
+        b.piece(K.ROOF_RIDGE, ((a if along_x else mx), (my if along_x else a), ridge_z - 4), (seg_len / 2.0, 100, 100), color,
+                yaw=0.0 if along_x else 90.0, vary=0.03)
+    for e in ((X0 + 14, X1 - 14) if along_x else (Y0 + 14, Y1 - 14)):
+        b.piece(K.GABLE, ((e if along_x else mx), (my if along_x else e), base), (short, 100, rise), (0.60, 0.56, 0.48),
+                yaw=90.0 if along_x else 0.0, vary=0.02)
+
+
+WALL_PIECES = {
+    K.STONE: (K.STONE_WALL, K.STONE_WINDOW, K.STONE_POST),
+    K.PLASTER: (K.PLASTER_WALL, K.PLASTER_WINDOW, K.PLASTER_POST),
+    K.TIMBER: (K.TIMBER_WALL, K.TIMBER_WINDOW, K.TIMBER_POST),
+}
 
 
 def build_roofs(b, s, floors, walls):

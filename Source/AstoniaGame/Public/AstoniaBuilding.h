@@ -35,6 +35,22 @@ enum class EAstoniaKit : uint8
 	Plaster,     // cube, collision (rendered walls of half-timbered houses)
 	Timber,      // cube, collision (plank walls)
 	Blocker,     // cube, collision, never drawn (forest edges, gaps between trunks)
+	TreeRound,   // Blender models (SM_Kit_<Layer>), no collision (trunks get a Blocker); sphere until imported
+	TreeTall,
+	TreeForest,
+	Bush,
+	StoneWall,     // modular building kit (Scripts/blender/make_buildings.py): one per wall tile,
+	StoneWindow,   // material by style; no collision (builders add Blocker runs)
+	StonePost,
+	PlasterWall,
+	PlasterWindow,
+	PlasterPost,
+	TimberWall,
+	TimberWindow,
+	TimberPost,
+	RoofPanel,     // 2 x 2 m of shingles, +Y down the slope
+	RoofRidge,
+	Gable,         // unit triangle, scaled per roof end
 	Count UMETA(Hidden)
 };
 
@@ -46,7 +62,9 @@ enum class EAstoniaKit : uint8
  *
  * Sizes are in cm and are the full extent of the piece (a cylinder's X/Y size is its diameter).
  * A layer uses /Game/Astonia/Materials/Kit/MI_Kit_<Layer> when it exists (textured, world-aligned,
- * tinted by the piece colour), else the plain or stone placeholder material.
+ * tinted by the piece colour), else the plain or stone placeholder material. A layer whose model exists
+ * as /Game/Astonia/Meshes/SM_Kit_<Layer> (made in Blender, Scripts/blender) uses it instead of the
+ * basic shape; each of its material slots takes MI_Kit_<SlotName> (e.g. Trunk, Leaves) when it exists.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaBuilding : public AActor

@@ -297,11 +297,7 @@ def old_spot(b):
             if h % 9:
                 continue
             cx, cy = (x + 0.5) * T + (h >> 8) % 80 - 40, (y + 0.5) * T + (h >> 16) % 80 - 40
-            trunk = 280 + (h >> 4) % 160
-            crown = 260 + (h >> 12) % 120
-            b.piece(K.TRUNK, (cx, cy, trunk / 2), (40, 40, trunk), BARK)
-            b.piece(K.LEAVES, (cx, cy, trunk + crown * 0.3), (crown, crown, crown * 0.9), LEAVES, vary=0.12)
-            b.piece(K.LEAVES, (cx + crown * 0.2, cy - crown * 0.15, trunk + crown * 0.7), (crown * 0.7, crown * 0.7, crown * 0.65), LEAVES, vary=0.12)
+            kit_tree(b, cx, cy, h, "forest" if h % 2 else "tree")
             trees += 1
     return trees
 

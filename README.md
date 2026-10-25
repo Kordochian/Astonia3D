@@ -59,6 +59,12 @@ Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepa
   `SourceArt\Textures` (no original art); `Scripts\import_textures.py` imports them and builds `M_KitTex`
   (world-aligned triplanar) and the `MI_Kit_<Layer>` instances every `AAstoniaBuilding` layer picks up by name.
   Full rebuild order: make_textures, import_textures, build_zone, build_fortress, build_thieves_guild, build_cameron_3d.
+- Blender models (Blender 5.2, run headless): `Scripts\blender\make_trees.py` (SM_Kit_TreeRound/TreeTall/
+  TreeForest/Bush) and `Scripts\blender\make_buildings.py` (SM_Kit_WallStraight/WallWindow/WallPost/RoofPanel/
+  RoofRidge/Gable) write FBX to `SourceArt\Meshes`; `Scripts\blender\preview.py` renders them;
+  `Scripts\import_meshes.py` imports them as Nanite meshes into `/Game/Astonia/Meshes`. An `AAstoniaBuilding`
+  layer uses `SM_Kit_<model>` when it exists, each material slot by name (Wall = the layer's material).
+  `blender.exe -b --factory-startup --python Scripts\blender\make_trees.py`
 - `Scripts\build_thieves_guild.py` (after `build_zone.py`) builds the Thieves' Guild: a guildhouse against the
   fortress's east wall and, 6 m under it, the guild's 30 rooms from `cameron.map` (floors, walls, open doors,
   torches, chests, armchairs, fixed exposure), reached by a stair. Shared helpers live in `Scripts\astonia_kit.py`.
