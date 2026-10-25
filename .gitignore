@@ -12,3 +12,12 @@ DerivedDataCache/
 *.opensdf
 *.sdf
 Content/Developers/
+
+# Fab / Quixel assets: the Fab license does not allow publishing the source files in a public repo.
+# They stay on this machine only; add each new Fab folder here.
+Content/Fab/
+Content/Megascans/
+Content/MSPresets/
+Content/Quixel/
+Content/MWLandscapeAutoMaterial/
+Content/PavingStonesMaterial/
