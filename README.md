@@ -30,6 +30,10 @@ Controls: WASD move, mouse look, Space jump (gamepad: sticks and A).
 - Zone report (checks every zone file parses and lists drivers, flags and keys still to port):
   `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=AstoniaZoneReport [-Zones=<dir>] [-Out=<file>]`
   Writes `Saved\AstoniaZoneReport.txt`.
+- Template import (Phase 1): `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=AstoniaImportTemplates [-Zones=<dir>]`
+  rebuilds `/Game/Astonia/Data/DT_Items` (3,607 rows) and `DT_Characters` (938 rows) from the `.itm`/`.chr` files.
+  Row types: `FAstoniaItemRow`, `FAstoniaCharacterRow` in `AstoniaCore/Public/AstoniaDataRows.h`. A template name
+  used in more than one zone keeps the first one (generic, then zones by number); later ones are `<name>@<zone>`.
 - `Scripts\create_world.py` recreates `L_World` from the engine's OpenWorld template if it is missing:
   `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>\Scripts\create_world.py"`
 

@@ -1,4 +1,5 @@
 #include "AstoniaZoneReportCommandlet.h"
+#include "AstoniaEditorPaths.h"
 #include "AstoniaTextFormat.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
@@ -8,12 +9,6 @@ DEFINE_LOG_CATEGORY_STATIC(LogAstoniaZoneReport, Log, All);
 
 namespace
 {
-	/** Default: the community 3.5 server checked out next to the UE project. */
-	FString DefaultZonesDir()
-	{
-		return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("../../source_codes/astonia_community_server35-main/zones"));
-	}
-
 	void Count(TMap<FString, int32>& Map, const FString& Key) { Map.FindOrAdd(Key)++; }
 
 	void AppendSorted(FString& Report, const TCHAR* Title, TMap<FString, int32>& Map)
@@ -36,7 +31,7 @@ UAstoniaZoneReportCommandlet::UAstoniaZoneReportCommandlet()
 
 int32 UAstoniaZoneReportCommandlet::Main(const FString& Params)
 {
-	FString ZonesDir = DefaultZonesDir();
+	FString ZonesDir = AstoniaEditorPaths::DefaultZonesDir();
 	FParse::Value(*Params, TEXT("Zones="), ZonesDir);
 	FString OutFile = FPaths::ProjectSavedDir() / TEXT("AstoniaZoneReport.txt");
 	FParse::Value(*Params, TEXT("Out="), OutFile);
