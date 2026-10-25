@@ -41,7 +41,7 @@ Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepa
   Verticality: areas the 2D game reached through teleport holes are moved under their entrance
   (`Placements`, set per area in the script's `LAYOUTS`), joined by `AAstoniaLift` platforms and, where
   wanted, hidden behind an `AAstoniaSecretDoor`; `HeightRegions` raise fortress walls and towers.
-  `Scriptsnalyze_links.py` lists an area's walkable sections and teleports to plan this.
+  `Scripts\analyze_links.py` lists an area's walkable sections and teleports to plan this.
 - `Scripts\shots.ps1 name=X,Y,Z,Yaw ...` runs the game and saves a screenshot from each spot
   (`-AstoniaGoto` / `-AstoniaShot`, development builds only).
 - `Scripts\create_world.py` recreates an empty World Partition `L_World` (sky, sun, fog, PlayerStart; no terrain) if it is missing:
