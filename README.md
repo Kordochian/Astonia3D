@@ -39,5 +39,5 @@ Controls: WASD move, mouse look, Space jump (gamepad: sticks and A).
 
 ## Plan
 
-See `F:\After_Astonia\UE5-REBUILD-PLAN.md`. Phase 0 (this skeleton) is done; next is Phase 1 (import the
-templates into DataTables) and Phase 2 (build Cameron in the open world).
+See `F:\After_Astonia\mds\UE5-REBUILD-PLAN.md` and the handoff note `F:\After_Astonia\mds\HANDOFF-UE5.md`.
+Phases 0 (skeleton) and 1 (templates into DataTables) are done; next is Phase 2 (build Cameron in the open world).
