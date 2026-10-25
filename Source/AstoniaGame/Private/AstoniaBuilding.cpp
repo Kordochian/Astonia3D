@@ -31,6 +31,17 @@ namespace
 		{TEXT("DecorRound"), TEXT("/Engine/BasicShapes/Cylinder.Cylinder"), false},
 		{TEXT("Glow"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), false},
 		{TEXT("Ground"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Rock"), TEXT("/Engine/BasicShapes/Sphere.Sphere"), true},
+		{TEXT("Grass"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Dirt"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Cobble"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Forest"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Planks"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Tiles"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Flagstone"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Plaster"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Timber"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
+		{TEXT("Blocker"), TEXT("/Engine/BasicShapes/Cube.Cube"), true},
 	};
 	static_assert(UE_ARRAY_COUNT(KitInfo) == int32(EAstoniaKit::Count), "KitInfo must list every EAstoniaKit");
 
@@ -55,6 +66,7 @@ AAstoniaBuilding::AAstoniaBuilding()
 		Layer->SetCastShadow(Kit != int32(EAstoniaKit::Glow));
 		ConstructorHelpers::FObjectFinder<UStaticMesh> Mesh(Info.Mesh);
 		if (Mesh.Succeeded()) Layer->SetStaticMesh(Mesh.Object);
+		if (Kit == int32(EAstoniaKit::Blocker)) Layer->SetVisibility(false);
 		KitLayers.Add(Layer);
 	}
 
@@ -63,8 +75,25 @@ AAstoniaBuilding::AAstoniaBuilding()
 	GlowMaterial = TSoftObjectPtr<UMaterialInterface>(FSoftObjectPath(TEXT("/Game/Astonia/Materials/M_KitGlow.M_KitGlow")));
 }
 
+void AAstoniaBuilding::PostLoad()
+{
+	Super::PostLoad();
+	EnsureLayers();
+}
+
+void AAstoniaBuilding::EnsureLayers()
+{
+	// The constructor made every layer; an older save only listed the kits that existed then.
+	KitLayers.SetNum(int32(EAstoniaKit::Count));
+	for (int32 Kit = 0; Kit < KitLayers.Num(); Kit++)
+	{
+		if (!KitLayers[Kit]) KitLayers[Kit] = FindObject<UHierarchicalInstancedStaticMeshComponent>(this, KitInfo[Kit].Name);
+	}
+}
+
 void AAstoniaBuilding::ClearPieces()
 {
+	EnsureLayers();
 	Modify();
 	UMaterialInterface* Stone = StoneMaterial.LoadSynchronous();
 	UMaterialInterface* Plain = PlainMaterial.LoadSynchronous();
@@ -72,9 +101,13 @@ void AAstoniaBuilding::ClearPieces()
 	for (int32 Kit = 0; Kit < KitLayers.Num(); Kit++)
 	{
 		UHierarchicalInstancedStaticMeshComponent* Layer = KitLayers[Kit];
+		if (!Layer) continue;
 		Layer->Modify();
 		Layer->ClearInstances();
-		UMaterialInterface* Material = Kit == int32(EAstoniaKit::Glow) ? Glow : IsStone(Kit) ? Stone : Plain;
+		// Textured kit material by convention, else the placeholder look.
+		const FString Textured = FString::Printf(TEXT("/Game/Astonia/Materials/Kit/MI_Kit_%s.MI_Kit_%s"), KitInfo[Kit].Name, KitInfo[Kit].Name);
+		UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, *Textured, nullptr, LOAD_NoWarn | LOAD_Quiet);
+		if (!Material) Material = Kit == int32(EAstoniaKit::Glow) ? Glow : IsStone(Kit) ? Stone : Plain;
 		if (Material) Layer->SetMaterial(0, Material);
 	}
 	TArray<UActorComponent*> OldLights = GetComponentsByTag(UPointLightComponent::StaticClass(), BuildingLightTag);
@@ -89,6 +122,7 @@ void AAstoniaBuilding::AddPiece(EAstoniaKit Kit, FVector Center, FVector Size, F
 {
 	if (!KitLayers.IsValidIndex(int32(Kit))) return;
 	UHierarchicalInstancedStaticMeshComponent* Layer = KitLayers[int32(Kit)];
+	if (!Layer) return;
 	const int32 Index = Layer->AddInstance(FTransform(Rotation, Center, Size / 100.f));
 	Layer->SetCustomDataValue(Index, 0, Color.R, false);
 	Layer->SetCustomDataValue(Index, 1, Color.G, false);
@@ -113,7 +147,7 @@ void AAstoniaBuilding::FinishPieces()
 {
 	for (UHierarchicalInstancedStaticMeshComponent* Layer : KitLayers)
 	{
-		Layer->MarkRenderStateDirty();
+		if (Layer) Layer->MarkRenderStateDirty();
 	}
 }
 
@@ -122,7 +156,7 @@ int32 AAstoniaBuilding::GetPieceCount() const
 	int32 Count = 0;
 	for (const UHierarchicalInstancedStaticMeshComponent* Layer : KitLayers)
 	{
-		Count += Layer->GetInstanceCount();
+		if (Layer) Count += Layer->GetInstanceCount();
 	}
 	return Count;
 }

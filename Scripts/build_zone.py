@@ -43,6 +43,8 @@ LAYOUTS = {
         # Scripts/build_fortress.py: the zone leaves these tiles to it (min, max, keep ground
         # [, content offset in tiles, content depth cm]).
         "replaced": [
+            # The whole surface is built by Scripts/build_cameron_3d.py (it skips the regions below).
+            ((0, 0), (255, 255), False),
             ((112, 165), (142, 193), True),
             ((143, 170), (148, 193), True),
             ((114, 168), (134, 191), False),

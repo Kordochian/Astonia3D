@@ -147,7 +147,7 @@ def guild(b, tiles):
     for y, x0, x1 in rows(section):
         ax, ay = cm(x0, y)
         bx, _ = cm(x1 + 1, y)
-        b.box(K.STONE, ax, ay, z0 - 20, bx, ay + T, z0, GUILD_FLOOR, vary=0.04)
+        b.box(K.FLAGSTONE, ax, ay, z0 - 20, bx, ay + T, z0, GUILD_FLOOR, vary=0.04)
     for y, x0, x1 in rows(walls - tunnel):
         ax, ay = cm(x0, y)
         bx, _ = cm(x1 + 1, y)
@@ -239,7 +239,7 @@ def house(b):
             b.box(K.DECOR, x + s * 2 - 3, y - 50, 150, x + s * 2 + 3, y + 50, 260, SLIT, vary=0)
     # Upper storey: half-timbering (plaster panels and dark beams), not enterable.
     b.box(K.WOOD, hx0, hy0, low, hx1, hy1, low + 20, WOOD_DARK)
-    b.box(K.WOOD, hx0 + 10, hy0 + 10, low + 20, hx1 - 10, hy1 - 10, top, PLASTER, vary=0.03)
+    b.box(K.PLASTER, hx0 + 10, hy0 + 10, low + 20, hx1 - 10, hy1 - 10, top, PLASTER, vary=0.03)
     for x in range(int(hx0), int(hx1) + 1, 200):
         for y in (hy0 + 4, hy1 - 4):
             b.box(K.DECOR, x - 10, y - 10, low + 20, x + 10, y + 10, top, WOOD_DARK, vary=0)
@@ -263,7 +263,7 @@ def house(b):
         w = (hx1 - hx0) * (1 - (k + 0.5) / 6)
         z = top + k * rise / 6
         for y0, y1 in ((hy0, hy0 + 30), (hy1 - 30, hy1)):
-            b.box(K.WOOD, mid_x - w / 2, y0, z, mid_x + w / 2, y1, z + rise / 6, PLASTER, vary=0.03)
+            b.box(K.PLASTER, mid_x - w / 2, y0, z, mid_x + w / 2, y1, z + rise / 6, PLASTER, vary=0.03)
     b.box(K.STONE, hx1 - 300, hy1 - 360, top - 100, hx1 - 140, hy1 - 200, top + rise + 200, HOUSE_STONE)
     # Hanging sign by the door: a dark board with a dagger.
     sx, sy = door[1] + 160, hy0 - 70
@@ -289,7 +289,7 @@ def house(b):
 def old_spot(b):
     """Forest floor and trees where the guild was on the map (it is not reachable, but visible)."""
     (x0, y0), (x1, y1) = GUILD_RECT
-    b.box(K.GROUND, x0 * T, y0 * T, -20, (x1 + 1) * T, (y1 + 1) * T, 0, FOREST_FLOOR, vary=0)
+    b.box(K.FOREST, x0 * T, y0 * T, -20, (x1 + 1) * T, (y1 + 1) * T, 0, FOREST_FLOOR, vary=0)
     trees = 0
     for x in range(x0, x1 + 1):
         for y in range(y0, y1 + 1):

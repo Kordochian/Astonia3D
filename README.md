@@ -51,6 +51,14 @@ Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepa
   laid out from `cameron.map` (wall lines, gate, galleries, buttresses, trees, props, braziers, floors) plus
   towers, a gatehouse, stairs and a wall walk all the way round. Materials `M_Kit` / `MI_KitStone` /
   `MI_KitPlain` / `M_KitGlow` (stone courses and flagstones in world space, so new art can replace layers later).
+- `Scripts\build_cameron_3d.py` (after `build_zone.py`) builds the whole surface of Cameron as `Surface_Cameron`:
+  textured ground per tile, walls by sprite family, gable roofs over rooms, doors, trees and forest edges
+  (with blockers), bushes, rocks, props, torches, lamps, plants and area exits, all from `cameron.map`. The zone
+  actor now only keeps the underground levels, lifts and NPCs.
+- Textures: `Scripts\make_textures.py` (plain Python + Pillow) paints our own tileable textures into
+  `SourceArt\Textures` (no original art); `Scripts\import_textures.py` imports them and builds `M_KitTex`
+  (world-aligned triplanar) and the `MI_Kit_<Layer>` instances every `AAstoniaBuilding` layer picks up by name.
+  Full rebuild order: make_textures, import_textures, build_zone, build_fortress, build_thieves_guild, build_cameron_3d.
 - `Scripts\build_thieves_guild.py` (after `build_zone.py`) builds the Thieves' Guild: a guildhouse against the
   fortress's east wall and, 6 m under it, the guild's 30 rooms from `cameron.map` (floors, walls, open doors,
   torches, chests, armchairs, fixed exposure), reached by a stair. Shared helpers live in `Scripts\astonia_kit.py`.

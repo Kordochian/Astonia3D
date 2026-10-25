@@ -192,6 +192,62 @@ def ensure_materials():
         unreal.log("build_fortress: created %s" % glow_path)
 
 
+# --- Textured layers ---
+# AstoniaBuilding layer name -> (texture made by make_textures.py, world size of one repeat in cm).
+# import_textures.py builds /Game/Astonia/Materials/Kit/MI_Kit_<layer> from this.
+TEXTURED = {
+    "Stone": ("Bricks", 360.0),
+    "StoneRound": ("Bricks", 360.0),
+    "Trim": ("SmoothStone", 300.0),
+    "Wood": ("Planks", 200.0),
+    "Roof": ("Shingles", 260.0),
+    "RoofCone": ("Slate", 220.0),
+    "Trunk": ("Bark", 160.0),
+    "Leaves": ("Leaves", 220.0),
+    "Ground": ("Dirt", 400.0),
+    "Rock": ("Rock", 300.0),
+    "Grass": ("Grass", 400.0),
+    "Dirt": ("Dirt", 400.0),
+    "Cobble": ("Cobble", 260.0),
+    "Forest": ("Forest", 400.0),
+    "Planks": ("Planks", 200.0),
+    "Tiles": ("Tiles", 200.0),
+    "Flagstone": ("Flagstone", 260.0),
+    "Plaster": ("Plaster", 300.0),
+    "Timber": ("Timber", 200.0),
+}
+
+
+def _kit_name(kit):
+    # unreal enum values print as e.g. "AstoniaKit.STONE_ROUND"; the layer is "StoneRound".
+    return "".join(p.capitalize() for p in str(kit).split(".")[-1].split("_"))
+
+
+def _texture_averages():
+    import json
+    import os
+    path = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir()), "SourceArt", "Textures", "averages.json")
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except OSError:
+        return {}
+
+
+_AVERAGES = _texture_averages()
+_TINT_CACHE = {}
+
+
+def kit_tint(kit):
+    """Per-channel factor that turns a wanted colour into the tint for a textured layer, so the piece
+    shows that colour on average (the material draws texture x tint x 2). None for plain layers."""
+    if kit not in _TINT_CACHE:
+        name = _kit_name(kit)
+        avg = _AVERAGES.get(TEXTURED[name][0]) if name in TEXTURED else None
+        _TINT_CACHE[kit] = [0.5 / max(a, 0.02) for a in avg] if avg else None
+    return _TINT_CACHE[kit]
+
+
 # --- Piece helpers ---
 class Builder:
     def __init__(self, actor):
@@ -202,9 +258,11 @@ class Builder:
         # Small brightness changes per piece so repeated blocks don't look pasted.
         h = (int(center[0] * 7 + center[1] * 13 + center[2] * 17) * 2654435761) & 0xFFFFFFFF
         f = 1.0 + vary * (((h >> 8) % 1000) / 500.0 - 1.0)
+        tint = kit_tint(kit)
+        c = [color[i] * f * (tint[i] if tint else 1.0) for i in range(3)]
         self.actor.add_piece(kit, unreal.Vector(*center), unreal.Vector(*size),
                              unreal.Rotator(roll=roll, pitch=pitch, yaw=yaw),
-                             unreal.LinearColor(color[0] * f, color[1] * f, color[2] * f, 1.0))
+                             unreal.LinearColor(c[0], c[1], c[2], 1.0))
         self.count += 1
 
     def box(self, kit, x0, y0, z0, x1, y1, z1, color, **kw):

@@ -277,7 +277,7 @@ def gate(b):
         for z in (120, 320, 520):
             b.box(K.DECOR, xl - 18, by1 + 10, z - 12, xl + 18, by1 + 470, z + 12, METAL, vary=0)
     # Road through the passage and torches on both sides.
-    b.box(K.STONE, g0, GATE_Y[0] - 100, -20, g1, by1, 2, THRESHOLD)
+    b.box(K.COBBLE, g0, GATE_Y[0] - 100, -20, g1, by1, 2, THRESHOLD)
     for x in (g0 - 30, g1 + 30):
         sconce(b, x, GATE_Y[0] - 30, 420)
         sconce(b, x, GATE_Y[1] + 30, 420)
@@ -363,15 +363,15 @@ def main():
             g = tiles.get((x, y), {}).get("g", 0)
             x0, y0 = x * T, y * T
             if 12010 <= g <= 12018:
-                b.box(K.GROUND, x0, y0, -20, x0 + T, y0 + T, 0, EARTH, vary=0.08)
+                b.box(K.DIRT, x0, y0, -20, x0 + T, y0 + T, 0, EARTH, vary=0.08)
             elif 12030 <= g <= 12038:
-                b.box(K.GROUND, x0, y0, -20, x0 + T, y0 + T, 0, PATH, vary=0.08)
+                b.box(K.DIRT, x0, y0, -20, x0 + T, y0 + T, 0, PATH, vary=0.08)
             elif 12000 <= g <= 12008:
-                b.box(K.GROUND, x0, y0, -20, x0 + T, y0 + T, 0, GRASS, vary=0.08)
+                b.box(K.GRASS, x0, y0, -20, x0 + T, y0 + T, 0, GRASS, vary=0.08)
             elif 30000 <= g <= 30020:
-                b.box(K.STONE, x0, y0, -20, x0 + T, y0 + T, 0, THRESHOLD)
+                b.box(K.COBBLE, x0, y0, -20, x0 + T, y0 + T, 0, THRESHOLD)
             else:
-                b.box(K.STONE, x0, y0, -20, x0 + T, y0 + T, 0, PAVING, vary=0.03)
+                b.box(K.FLAGSTONE, x0, y0, -20, x0 + T, y0 + T, 0, PAVING, vary=0.03)
     mosaic(b, (START[0] + 0.5) * T, (START[1] + 0.5) * T)
 
     # Walls, towers, gate.

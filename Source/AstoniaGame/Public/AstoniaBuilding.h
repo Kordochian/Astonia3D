@@ -24,6 +24,17 @@ enum class EAstoniaKit : uint8
 	DecorRound,  // cylinder, plain, no collision (mosaics, rings)
 	Glow,        // sphere, emissive colour, no collision (torch flames)
 	Ground,      // cube, plain, collision (earth and path floors)
+	Rock,        // sphere, collision (boulders, ridges)
+	Grass,       // cube floors by surface, collision
+	Dirt,
+	Cobble,
+	Forest,
+	Planks,
+	Tiles,
+	Flagstone,
+	Plaster,     // cube, collision (rendered walls of half-timbered houses)
+	Timber,      // cube, collision (plank walls)
+	Blocker,     // cube, collision, never drawn (forest edges, gaps between trunks)
 	Count UMETA(Hidden)
 };
 
@@ -34,6 +45,8 @@ enum class EAstoniaKit : uint8
  * the level. New art replaces whole layers later (M9) without touching the layout.
  *
  * Sizes are in cm and are the full extent of the piece (a cylinder's X/Y size is its diameter).
+ * A layer uses /Game/Astonia/Materials/Kit/MI_Kit_<Layer> when it exists (textured, world-aligned,
+ * tinted by the piece colour), else the plain or stone placeholder material.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaBuilding : public AActor
@@ -75,6 +88,11 @@ public:
 	TSoftObjectPtr<UMaterialInterface> GlowMaterial;
 
 private:
+	/** One layer per EAstoniaKit. Actors saved before a kit was added get the new layers back in
+	 *  PostLoad (EnsureLayers). */
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TArray<TObjectPtr<UHierarchicalInstancedStaticMeshComponent>> KitLayers;
+
+	virtual void PostLoad() override;
+	void EnsureLayers();
 };
