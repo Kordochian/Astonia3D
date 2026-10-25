@@ -1,7 +1,8 @@
 """Builds the modular building kit in Blender and exports SourceArt/Meshes/SM_Kit_<Piece>.fbx:
 
-- WallStraight: one map tile of wall (2 m along X, 4 m high): body 1.8 m thick with a plinth and a
-  cornice the full 2 m, so straight runs join seamlessly and the plinth matches the tile's collision.
+- WallStraight: one map tile of wall (2 m along X, 4 m high, centred on the tile line): body 0.5 m
+  thick, plinth and cornice 0.6 m, so straight runs join seamlessly. Scaled to half length it is also
+  the arm that joins a post to its neighbours.
 - WallWindow: the same with a shuttered window recessed into both faces.
 - WallPost: corners, ends and junctions: chamfered block with plinth and cap all round.
 - RoofPanel: 2 x 2 m of overlapping shingle rows (X along the ridge, +Y down the slope).
@@ -55,13 +56,17 @@ def prism(bm, pts, z0, z1, mat):
         f.material_index = SLOTS.index(mat)
 
 
+# Wall thickness (half widths, metres): body 0.5 m, plinth and cornice 0.6 m; posts 0.72 m.
+BODY, LIP = 0.25, 0.3
+
+
 def wall_profile(bm, x0, x1, H=4.0):
-    """Plinth, body and cornice of a straight wall from x0 to x1 (along X)."""
-    box(bm, Vector((x0, -1.0, 0.0)), Vector((x1, 1.0, 0.45)), "Trim", bevel=0.03)
-    box(bm, Vector((x0, -0.97, 0.45)), Vector((x1, 0.97, 0.55)), "Trim")
-    box(bm, Vector((x0, -0.9, 0.55)), Vector((x1, 0.9, H - 0.35)), "Wall")
-    box(bm, Vector((x0, -0.96, H - 0.35)), Vector((x1, 0.96, H - 0.25)), "Trim")
-    box(bm, Vector((x0, -1.0, H - 0.25)), Vector((x1, 1.0, H)), "Trim", bevel=0.03)
+    """Plinth, body and cornice of a straight wall from x0 to x1 (along X), centred on the tile line."""
+    box(bm, Vector((x0, -LIP, 0.0)), Vector((x1, LIP, 0.45)), "Trim", bevel=0.02)
+    box(bm, Vector((x0, -LIP + 0.03, 0.45)), Vector((x1, LIP - 0.03, 0.55)), "Trim")
+    box(bm, Vector((x0, -BODY, 0.55)), Vector((x1, BODY, H - 0.35)), "Wall")
+    box(bm, Vector((x0, -LIP + 0.04, H - 0.35)), Vector((x1, LIP - 0.04, H - 0.25)), "Trim")
+    box(bm, Vector((x0, -LIP, H - 0.25)), Vector((x1, LIP, H)), "Trim", bevel=0.02)
 
 
 def wall_straight():
@@ -73,40 +78,41 @@ def wall_straight():
 def wall_window():
     bm = bmesh.new()
     H = 4.0
-    w, z0, z1, depth = 0.45, 1.25, 2.6, 0.32
-    box(bm, Vector((-1.0, -1.0, 0.0)), Vector((1.0, 1.0, 0.45)), "Trim", bevel=0.03)
-    box(bm, Vector((-1.0, -0.97, 0.45)), Vector((1.0, 0.97, 0.55)), "Trim")
+    w, z0, z1, depth = 0.45, 1.25, 2.6, 0.1
+    box(bm, Vector((-1.0, -LIP, 0.0)), Vector((1.0, LIP, 0.45)), "Trim", bevel=0.02)
+    box(bm, Vector((-1.0, -LIP + 0.03, 0.45)), Vector((1.0, LIP - 0.03, 0.55)), "Trim")
     # Body around the opening: below, above, left, right; the core stays solid behind the recess.
-    box(bm, Vector((-1.0, -0.9, 0.55)), Vector((1.0, 0.9, z0)), "Wall")
-    box(bm, Vector((-1.0, -0.9, z1)), Vector((1.0, 0.9, H - 0.35)), "Wall")
-    box(bm, Vector((-1.0, -0.9, z0)), Vector((-w, 0.9, z1)), "Wall")
-    box(bm, Vector((w, -0.9, z0)), Vector((1.0, 0.9, z1)), "Wall")
-    box(bm, Vector((-w, -0.9 + depth, z0)), Vector((w, 0.9 - depth, z1)), "Wood")   # closed shutters
+    box(bm, Vector((-1.0, -BODY, 0.55)), Vector((1.0, BODY, z0)), "Wall")
+    box(bm, Vector((-1.0, -BODY, z1)), Vector((1.0, BODY, H - 0.35)), "Wall")
+    box(bm, Vector((-1.0, -BODY, z0)), Vector((-w, BODY, z1)), "Wall")
+    box(bm, Vector((w, -BODY, z0)), Vector((1.0, BODY, z1)), "Wall")
+    box(bm, Vector((-w, -BODY + depth, z0)), Vector((w, BODY - depth, z1)), "Wood")   # closed shutters
     for s in (-1, 1):
-        y_out = s * 0.9
-        y_in = s * (0.9 - depth)
+        y_out = s * BODY
+        y_in = s * (BODY - depth)
         lo_y, hi_y = min(y_out, y_in), max(y_out, y_in)
         box(bm, Vector((-w - 0.08, lo_y - (0.06 if s < 0 else 0), z0 - 0.12)), Vector((w + 0.08, hi_y + (0.06 if s > 0 else 0), z0)), "Trim", bevel=0.02)   # sill
         box(bm, Vector((-w - 0.06, lo_y, z1)), Vector((w + 0.06, hi_y, z1 + 0.14)), "Trim")   # lintel
-        yy0, yy1 = sorted((y_in, y_in + s * 0.05))
+        yy0, yy1 = sorted((y_in, y_in + s * 0.04))
         box(bm, Vector((-0.03, yy0, z0)), Vector((0.03, yy1, z1)), "Wood")   # mullion
         box(bm, Vector((-w, yy0, (z0 + z1) / 2 - 0.03)), Vector((w, yy1, (z0 + z1) / 2 + 0.03)), "Wood")
-    box(bm, Vector((-1.0, -0.96, H - 0.35)), Vector((1.0, 0.96, H - 0.25)), "Trim")
-    box(bm, Vector((-1.0, -1.0, H - 0.25)), Vector((1.0, 1.0, H)), "Trim", bevel=0.03)
+    box(bm, Vector((-1.0, -LIP + 0.04, H - 0.35)), Vector((1.0, LIP - 0.04, H - 0.25)), "Trim")
+    box(bm, Vector((-1.0, -LIP, H - 0.25)), Vector((1.0, LIP, H)), "Trim", bevel=0.02)
     export("SM_Kit_WallWindow", bm)
 
 
 def wall_post():
+    """Corner / end / junction pillar; the builder adds half-wall arms towards the connected sides."""
     bm = bmesh.new()
     H = 4.0
 
     def octagon(r, c):
         return [(r, -r + c), (r, r - c), (r - c, r), (-r + c, r), (-r, r - c), (-r, -r + c), (-r + c, -r), (r - c, -r)]
-    prism(bm, octagon(1.02, 0.12), 0.0, 0.45, "Trim")
-    prism(bm, octagon(1.0, 0.1), 0.45, 0.55, "Trim")
-    prism(bm, octagon(0.96, 0.16), 0.55, H - 0.35, "Wall")
-    prism(bm, octagon(1.0, 0.12), H - 0.35, H - 0.25, "Trim")
-    prism(bm, octagon(1.04, 0.12), H - 0.25, H, "Trim")
+    prism(bm, octagon(0.4, 0.06), 0.0, 0.45, "Trim")
+    prism(bm, octagon(0.38, 0.06), 0.45, 0.55, "Trim")
+    prism(bm, octagon(0.34, 0.07), 0.55, H - 0.35, "Wall")
+    prism(bm, octagon(0.38, 0.06), H - 0.35, H - 0.25, "Trim")
+    prism(bm, octagon(0.42, 0.06), H - 0.25, H, "Trim")
     export("SM_Kit_WallPost", bm)
 
 

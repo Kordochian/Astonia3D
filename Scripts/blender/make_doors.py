@@ -6,7 +6,8 @@ leaf and a frame that fits one 2 m map tile between two wall pieces.
 - Fancy: arched, panelled door with brass studs, handle and knocker; stone jambs and an arch with a keystone.
 - Metal: riveted iron plates with cross bands and a heavy bolt; stone jambs, lintel and an iron band frame.
 
-Frames: tile centre on the ground, opening 1.5 m wide along X (you walk through along Y), jambs up to
+Frames: tile centre on the ground, 0.6 m deep like the walls, opening 1.5 m wide along X (you walk
+through along Y), jambs up to
 the frame top (FRAME_TOP below; the builder fills the wall above it). Leaves: pivot at the hinge
 (x = 0, bottom), closed leaf spans +X to 1.5 m, thickness along Y centred on 0. Slots by name: Wood, Metal,
 Brass, Trim (smooth stone). Metres.
@@ -194,7 +195,7 @@ def door_metal():
 
 
 # --- frames (tile centre, opening along X) ---
-def jamb_boxes(bm, top, mat, depth=0.95, bevel=0.0):
+def jamb_boxes(bm, top, mat, depth=0.3, bevel=0.0):
     for x0, x1 in ((-1.0, -W / 2), (W / 2, 1.0)):
         box(bm, (x0, -depth, 0.0), (x1, depth, top), mat, bevel=bevel)
 
@@ -205,10 +206,10 @@ def frame_rickety():
     top = FRAME_TOP["Rickety"]
     for x in (-W / 2 - 0.1, W / 2 + 0.1):
         tilt = Matrix.Rotation(math.radians(rnd.uniform(-2, 2)), 3, "Y")
-        box(bm, (x - 0.12, -0.95, 0.0), (x + 0.12, 0.95, top - 0.1), "Wood", rot=tilt)
+        box(bm, (x - 0.12, -0.3, 0.0), (x + 0.12, 0.3, top - 0.1), "Wood", rot=tilt)
     for x0, x1 in ((-1.0, -W / 2 - 0.22), (W / 2 + 0.22, 1.0)):      # filler to the wall pieces
-        box(bm, (x0, -0.9, 0.0), (x1, 0.9, top), "Wood")
-    box(bm, (-1.05, -0.97, top - 0.22), (1.05, 0.97, top), "Wood", rot=Matrix.Rotation(math.radians(1.5), 3, "Y"))
+        box(bm, (x0, -0.25, 0.0), (x1, 0.25, top), "Wood")
+    box(bm, (-1.05, -0.32, top - 0.22), (1.05, 0.32, top), "Wood", rot=Matrix.Rotation(math.radians(1.5), 3, "Y"))
     export("SM_Kit_FrameRickety", bm)
 
 
@@ -216,9 +217,9 @@ def frame_plank():
     bm = bmesh.new()
     top = FRAME_TOP["Plank"]
     jamb_boxes(bm, top, "Wood", bevel=0.02)
-    box(bm, (-1.0, -0.98, top - 0.3), (1.0, 0.98, top), "Wood", bevel=0.02)
+    box(bm, (-1.0, -0.32, top - 0.3), (1.0, 0.32, top), "Wood", bevel=0.02)
     for s in (-1, 1):   # stop moulding round the opening
-        y0, y1 = sorted((s * 0.95, s * 1.0))
+        y0, y1 = sorted((s * 0.3, s * 0.34))
         box(bm, (-W / 2 - 0.1, y0, 0.0), (-W / 2, y1, top - 0.3), "Wood")
         box(bm, (W / 2, y0, 0.0), (W / 2 + 0.1, y1, top - 0.3), "Wood")
         box(bm, (-W / 2 - 0.1, y0, top - 0.4), (W / 2 + 0.1, y1, top - 0.3), "Wood")
@@ -237,7 +238,7 @@ def frame_fancy():
         a0, a1 = math.pi * i / seg, math.pi * (i + 1) / seg
         pts = [(r_in * math.cos(a0), spring + r_in * math.sin(a0)), (r_out * math.cos(a0), spring + r_out * math.sin(a0)),
                (r_out * math.cos(a1), spring + r_out * math.sin(a1)), (r_in * math.cos(a1), spring + r_in * math.sin(a1))]
-        slab(bm, list(reversed(pts)), -1.0, 1.0, "Trim")
+        slab(bm, list(reversed(pts)), -0.32, 0.32, "Trim")
     # Spandrels: fill between the arch and the frame top / tile edges.
     # Spandrels: thin vertical strips from the arch's outer edge up to the frame top.
     strips = 16
@@ -246,11 +247,11 @@ def frame_fancy():
         xm = max(abs(x0), abs(x1)) if x0 * x1 > 0 else 0.0
         z0 = spring + math.sqrt(max(r_out * r_out - xm * xm, 0.0)) - 0.03 if xm < r_out else spring
         if z0 < top:
-            box(bm, (x0, -0.92, z0), (x1, 0.92, top), "Trim")
-    box(bm, (-0.12, -1.02, top - 0.42), (0.12, 1.02, top), "Trim", bevel=0.02)    # keystone
+            box(bm, (x0, -0.28, z0), (x1, 0.28, top), "Trim")
+    box(bm, (-0.12, -0.36, top - 0.42), (0.12, 0.36, top), "Trim", bevel=0.02)    # keystone
     for x in (-W / 2 - 0.25, W / 2):   # plinths and imposts
-        box(bm, (x, -1.02, 0.0), (x + 0.25, 1.02, 0.3), "Trim", bevel=0.02)
-        box(bm, (x - 0.03, -1.02, spring - 0.12), (x + 0.28, 1.02, spring), "Trim", bevel=0.02)
+        box(bm, (x, -0.34, 0.0), (x + 0.25, 0.34, 0.3), "Trim", bevel=0.02)
+        box(bm, (x - 0.03, -0.34, spring - 0.12), (x + 0.28, 0.34, spring), "Trim", bevel=0.02)
     export("SM_Kit_FrameFancy", bm)
 
 
@@ -258,15 +259,15 @@ def frame_metal():
     bm = bmesh.new()
     top = FRAME_TOP["Metal"]
     jamb_boxes(bm, top, "Trim", bevel=0.02)
-    box(bm, (-1.02, -1.0, top - 0.4), (1.02, 1.0, top), "Trim", bevel=0.03)      # lintel stone
+    box(bm, (-1.02, -0.33, top - 0.4), (1.02, 0.33, top), "Trim", bevel=0.03)      # lintel stone
     for s in (-1, 1):
-        y0, y1 = sorted((s * 0.95, s * 1.02))
+        y0, y1 = sorted((s * 0.3, s * 0.35))
         box(bm, (-W / 2 - 0.08, y0, 0.0), (-W / 2, y1, top - 0.4), "Metal")
         box(bm, (W / 2, y0, 0.0), (W / 2 + 0.08, y1, top - 0.4), "Metal")
         box(bm, (-W / 2 - 0.08, y0, top - 0.48), (W / 2 + 0.08, y1, top - 0.4), "Metal")
         for z in (0.4, 1.2, 2.0):
             for x in (-W / 2 - 0.04, W / 2 + 0.04):
-                sphere(bm, (x, s * 1.03, z), 0.022, "Metal")
+                sphere(bm, (x, s * 0.36, z), 0.022, "Metal")
     export("SM_Kit_FrameMetal", bm)
 
 

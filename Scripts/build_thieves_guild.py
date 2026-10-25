@@ -167,7 +167,7 @@ def guild(b, tiles):
         if "door" in item:
             # Doorway in a wall line: a door from the kit, standing open.
             along_x = (p[0] - 1, p[1]) not in section and (p[0] + 1, p[1]) not in section
-            kit_door(b, cx, cy, z0, along_x, item, K.STONE, GUILD_STONE, ROOM_H, (p[0] * 73856093) ^ (p[1] * 19349663))
+            kit_door(b, cx, cy, z0, along_x, item, K.STONE, GUILD_STONE, ROOM_H, (p[0] * 73856093) ^ (p[1] * 19349663), depth=200.0)
             counts["doors"] += 1
         elif "walltorch" in item:
             d = wall_dir(tiles, p, section)

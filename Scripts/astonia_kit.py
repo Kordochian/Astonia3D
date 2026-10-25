@@ -323,27 +323,35 @@ def door_style(item):
     return "Plank"
 
 
-def kit_door(b, cx, cy, z0, along_x, item, wall_kit, wall_color, wall_h, h=0):
-    """A door from the kit in one map tile: frame (collision on its jambs), the leaf standing open into
-    the room, and wall above the frame up to wall_h. along_x: the wall line runs along X."""
+def kit_door(b, cx, cy, z0, along_x, item, wall_kit, wall_color, wall_h, h=0, depth=60.0):
+    """A door from the kit in one map tile: frame (collision on its jambs), the leaf hinged at the wall
+    face and standing open (70-90 degrees) into one side, and wall above the frame up to wall_h.
+    along_x: the wall line runs along X. depth: wall thickness above the frame (60 = the modular wall;
+    pass 200 inside full-tile walls)."""
     leaf, frame, top, leaf_color, frame_color = DOOR_STYLES[door_style(item)]
     yaw = 0.0 if along_x else 90.0
     b.piece(frame, (cx, cy, z0), (100, 100, 100), frame_color, yaw=yaw, vary=0.05)
+    d = depth / 2
     if top < wall_h:
-        b.box(wall_kit, cx - 100, cy - 100, z0 + top, cx + 100, cy + 100, z0 + wall_h, wall_color, vary=0.04)
+        if along_x:
+            b.box(wall_kit, cx - 100, cy - d, z0 + top, cx + 100, cy + d, z0 + wall_h, wall_color, vary=0.04)
+        else:
+            b.box(wall_kit, cx - d, cy - 100, z0 + top, cx + d, cy + 100, z0 + wall_h, wall_color, vary=0.04)
     for j0, j1 in ((-100, -75), (75, 100)):   # the jambs block, the 1.5 m opening stays free
         if along_x:
-            b.box(K.BLOCKER, cx + j0, cy - 100, z0, cx + j1, cy + 100, z0 + top, (0.5, 0.5, 0.5), vary=0)
+            b.box(K.BLOCKER, cx + j0, cy - 30, z0, cx + j1, cy + 30, z0 + top, (0.5, 0.5, 0.5), vary=0)
         else:
-            b.box(K.BLOCKER, cx - 100, cy + j0, z0, cx + 100, cy + j1, z0 + top, (0.5, 0.5, 0.5), vary=0)
-    # The leaf hangs on the left or right jamb and stands open (72-101 degrees) to one side or the other.
-    opened = 72.0 + h % 30
+            b.box(K.BLOCKER, cx - 30, cy + j0, z0, cx + 30, cy + j1, z0 + top, (0.5, 0.5, 0.5), vary=0)
+    # Hinge on the left or right jamb, on the face of the side the leaf opens to, so it swings clear
+    # of the frame; open 70-90 degrees.
+    opened = 70.0 + h % 21
     left = (h >> 4) % 2 == 0
-    inward = 1.0 if (h >> 5) % 2 == 0 else -1.0
+    side = 1.0 if (h >> 5) % 2 == 0 else -1.0
     a = math.radians(yaw)
-    hinge = -75.0 if left else 75.0
-    hx, hy = cx + hinge * math.cos(a), cy + hinge * math.sin(a)
-    leaf_yaw = yaw + (inward * opened if left else 180.0 - inward * opened)
+    lx, ly = (-70.0 if left else 70.0), side * 32.0
+    hx = cx + lx * math.cos(a) - ly * math.sin(a)
+    hy = cy + lx * math.sin(a) + ly * math.cos(a)
+    leaf_yaw = yaw + (side * opened if left else 180.0 - side * opened)
     b.piece(leaf, (hx, hy, z0), (100, 100, 100), leaf_color, yaw=leaf_yaw, vary=0.06)
 
 

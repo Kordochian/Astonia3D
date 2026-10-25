@@ -303,7 +303,7 @@ def plant(b, x, y, h, color=None):
 
 
 def build_objects(b, s):
-    counts = {"wall runs": 0, "trees": 0, "forest": 0, "bushes": 0, "rocks": 0, "props": 0, "plants": 0}
+    counts = {"wall tiles": 0, "trees": 0, "forest": 0, "bushes": 0, "rocks": 0, "props": 0, "plants": 0}
     floors = {p for p in s.surface - s.ground_only if not s.blocked(p) and "MF_INDOORS" in s.at(p)["fl"] and ground_kind(s.at(p))[2]}
     walls = {}
     forest = set()
@@ -338,30 +338,49 @@ def build_objects(b, s):
         else:
             prop(b, cx, cy, h)
             counts["props"] += 1
-    # Modular walls (Blender kit): a straight piece where a wall runs on, a post at corners, ends and
-    # junctions, now and then a window in room walls; collision stays a run of blocker boxes.
+    # Modular walls (Blender kit), 0.5 m thick on the tile's centre line: a straight piece where the
+    # wall runs on through the tile, else a post with half-length arms towards each connected side.
+    # Door tiles count as wall for this, so walls run straight up to the door frames. Collision follows
+    # the thin wall (blockers 0.6 m wide).
     every = set()
     for cells in walls.values():
         every |= cells
+    walls_all = set(every)
+    every |= {p for p in s.surface - s.ground_only if "door" in s.at(p)["it"] and "teleport" not in s.at(p)["it"]}
+    half = 30.0
     for ((kit, color), height), cells in walls.items():
         straight, window, post = WALL_PIECES[kit]
         zs = height / 400.0 * 100.0
         for (x, y) in cells:
-            ex, wx = (x + 1, y) in every, (x - 1, y) in every
-            ny, sy = (x, y - 1) in every, (x, y + 1) in every
+            e, w = (x + 1, y) in every, (x - 1, y) in every
+            n, so = (x, y - 1) in every, (x, y + 1) in every
             cx, cy = (x + 0.5) * T, (y + 0.5) * T
-            if (ex or wx) and not (ny or sy):
-                yaw, line = 0.0, ex and wx
-            elif (ny or sy) and not (ex or wx):
-                yaw, line = 90.0, ny and sy
+            X0, Y0, X1, Y1 = x * T, y * T, (x + 1) * T, (y + 1) * T
+            # Walls the map draws two or more tiles thick stay solid: a full-tile block.
+            solid = any(all((x + i, y + j) in walls_all for i in (0, dx) for j in (0, dy)) for dx in (-1, 1) for dy in (-1, 1))
+            if solid:
+                b.piece(straight, (cx, cy, 0), (100, 100 * T / (2 * half), zs), color, vary=0.04)
+                b.box(K.BLOCKER, X0, Y0, 0, X1, Y1, height, color, vary=0)
+            elif e and w and not (n or so):
+                piece = window if height >= WALL_H and (x * 7 + y * 3) % 4 == 0 else straight
+                b.piece(piece, (cx, cy, 0), (100, 100, zs), color, vary=0.04)
+                b.box(K.BLOCKER, X0, cy - half, 0, X1, cy + half, height, color, vary=0)
+            elif n and so and not (e or w):
+                piece = window if height >= WALL_H and (x * 7 + y * 3) % 4 == 0 else straight
+                b.piece(piece, (cx, cy, 0), (100, 100, zs), color, yaw=90.0, vary=0.04)
+                b.box(K.BLOCKER, cx - half, Y0, 0, cx + half, Y1, height, color, vary=0)
             else:
                 b.piece(post, (cx, cy, 0), (100, 100, zs), color, vary=0.04)
-                continue
-            piece = window if line and height >= WALL_H and (x * 7 + y * 3) % 4 == 0 else straight
-            b.piece(piece, (cx, cy, 0), (100, 100, zs), color, yaw=yaw, vary=0.04)
-        for y, x0, x1 in runs(cells):
-            b.box(K.BLOCKER, x0 * T, y * T, 0, (x1 + 1) * T, (y + 1) * T, height, color, vary=0)
-            counts["wall runs"] += 1
+                b.box(K.BLOCKER, cx - 36, cy - 36, 0, cx + 36, cy + 36, height, color, vary=0)
+                for on, dx, dy in ((e, 1, 0), (w, -1, 0), (so, 0, 1), (n, 0, -1)):
+                    if not on:
+                        continue
+                    b.piece(straight, (cx + dx * 50, cy + dy * 50, 0), (50, 100, zs), color, yaw=0.0 if dx else 90.0, vary=0.04)
+                    if dx:
+                        b.box(K.BLOCKER, min(cx, cx + dx * 100), cy - half, 0, max(cx, cx + dx * 100), cy + half, height, color, vary=0)
+                    else:
+                        b.box(K.BLOCKER, cx - half, min(cy, cy + dy * 100), 0, cx + half, max(cy, cy + dy * 100), height, color, vary=0)
+        counts["wall tiles"] += len(cells)
     for y, x0, x1 in runs(forest):
         b.box(K.BLOCKER, x0 * T, y * T, 0, (x1 + 1) * T, (y + 1) * T, FOREST_H, LEAVES, vary=0)
     return floors, walls, counts
@@ -487,10 +506,10 @@ def build_items(b, s):
         elif "walltorch" in it:
             if s.blocked(p):
                 d = next((d for d in ((0, 1), (1, 0), (0, -1), (-1, 0)) if s.walkable((x + d[0], y + d[1]))), (0, 1))
-                sconce(b, cx + d[0] * 112, cy + d[1] * 112, 250)
+                sconce(b, cx + d[0] * 37, cy + d[1] * 37, 250)    # on the face of this (0.5 m) wall
             else:
                 d = next((d for d in ((0, -1), (-1, 0), (1, 0), (0, 1)) if s.blocked((x + d[0], y + d[1]))), (0, -1))
-                sconce(b, cx + d[0] * 88, cy + d[1] * 88, 250)
+                sconce(b, cx + d[0] * 163, cy + d[1] * 163, 250)  # on the face of the next tile's wall
             counts["torches"] += 1
         elif "light" in it:
             lamp_post(b, cx, cy)
