@@ -1,5 +1,7 @@
 #include "AstoniaPlayerController.h"
 #include "AstoniaCharacter.h"
+#include "AstoniaInteractable.h"
+#include "EngineUtils.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -54,6 +56,41 @@ void AAstoniaPlayerController::BuildDefaultInput()
 
 	DefaultContext->MapKey(JumpAction, EKeys::SpaceBar);
 	DefaultContext->MapKey(JumpAction, EKeys::Gamepad_FaceButton_Bottom);
+
+	InteractAction = NewObject<UInputAction>(this, TEXT("IA_Interact"));
+	InteractAction->ValueType = EInputActionValueType::Boolean;
+	DefaultContext->MapKey(InteractAction, EKeys::E);
+	DefaultContext->MapKey(InteractAction, EKeys::Gamepad_FaceButton_Left);
+}
+
+AActor* AAstoniaPlayerController::FindInteractable() const
+{
+	const APawn* MyPawn = GetPawn();
+	if (!MyPawn) return nullptr;
+
+	const FVector From = MyPawn->GetActorLocation();
+	AActor* Best = nullptr;
+	float BestDist = TNumericLimits<float>::Max();
+	for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+	{
+		IAstoniaInteractable* Usable = Cast<IAstoniaInteractable>(*It);
+		if (!Usable || !Usable->CanInteract()) continue;
+		const float Dist = FVector::Dist(From, Usable->GetInteractLocation());
+		if (Dist <= Usable->GetInteractRange() && Dist < BestDist)
+		{
+			Best = *It;
+			BestDist = Dist;
+		}
+	}
+	return Best;
+}
+
+void AAstoniaPlayerController::OnInteract()
+{
+	if (AActor* Target = FindInteractable())
+	{
+		Cast<IAstoniaInteractable>(Target)->Interact(GetPawn());
+	}
 }
 
 void AAstoniaPlayerController::SetupInputComponent()
@@ -75,6 +112,7 @@ void AAstoniaPlayerController::SetupInputComponent()
 		Input->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAstoniaPlayerController::OnLook);
 		Input->BindAction(JumpAction, ETriggerEvent::Started, this, &AAstoniaPlayerController::OnJumpStarted);
 		Input->BindAction(JumpAction, ETriggerEvent::Completed, this, &AAstoniaPlayerController::OnJumpCompleted);
+		Input->BindAction(InteractAction, ETriggerEvent::Started, this, &AAstoniaPlayerController::OnInteract);
 	}
 }
 

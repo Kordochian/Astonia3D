@@ -4,7 +4,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Misc/CommandLine.h"
+#include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
 AAstoniaCharacter::AAstoniaCharacter()
@@ -44,6 +47,38 @@ AAstoniaCharacter::AAstoniaCharacter()
 	{
 		PlaceholderBody->SetStaticMesh(Cylinder.Object);
 	}
+}
+
+void AAstoniaCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+#if !UE_BUILD_SHIPPING
+	FString Goto;
+	if (FParse::Value(FCommandLine::Get(), TEXT("AstoniaGoto="), Goto, /*bShouldStopOnSeparator=*/false))
+	{
+		TArray<FString> Parts;
+		Goto.ParseIntoArray(Parts, TEXT(","));
+		if (Parts.Num() >= 3)
+		{
+			SetActorLocation(FVector(FCString::Atof(*Parts[0]), FCString::Atof(*Parts[1]), FCString::Atof(*Parts[2])));
+			if (Parts.Num() >= 4)
+			{
+				const FRotator Facing(-10.f, FCString::Atof(*Parts[3]), 0.f);
+				SetActorRotation(FRotator(0.f, Facing.Yaw, 0.f));
+				if (Controller) Controller->SetControlRotation(Facing);
+			}
+		}
+	}
+	if (FParse::Param(FCommandLine::Get(), TEXT("AstoniaShot")))
+	{
+		FTimerHandle Timer;
+		GetWorldTimerManager().SetTimer(Timer, [this]()
+		{
+			if (APlayerController* PC = Cast<APlayerController>(Controller)) PC->ConsoleCommand(TEXT("HighResShot 1280x720"));
+		}, 3.f, false);
+	}
+#endif
 }
 
 void AAstoniaCharacter::DoMove(float Right, float Forward)

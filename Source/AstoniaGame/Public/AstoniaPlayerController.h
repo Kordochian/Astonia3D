@@ -17,6 +17,10 @@ class ASTONIAGAME_API AAstoniaPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+public:
+	/** Closest usable IAstoniaInteractable in range of the pawn, or nullptr. */
+	AActor* FindInteractable() const;
+
 protected:
 	virtual void SetupInputComponent() override;
 
@@ -26,6 +30,7 @@ private:
 	void OnLook(const FInputActionValue& Value);
 	void OnJumpStarted();
 	void OnJumpCompleted();
+	void OnInteract();
 
 	UPROPERTY()
 	TObjectPtr<UInputMappingContext> DefaultContext;
@@ -38,4 +43,7 @@ private:
 
 	UPROPERTY()
 	TObjectPtr<UInputAction> JumpAction;
+
+	UPROPERTY()
+	TObjectPtr<UInputAction> InteractAction;
 };

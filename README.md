@@ -23,7 +23,7 @@ Conventions: 1 Astonia tile = 200 cm (`AstoniaTileSize`), an area is 256x256 til
    `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" AstoniaUE5Editor Win64 Development -Project="F:\After_Astonia\UE_port\AstoniaUE5\AstoniaUE5.uproject"`
 2. Open `AstoniaUE5.uproject`. It starts in `/Game/Maps/L_World` (World Partition open world). Press Play.
 
-Controls: WASD move, mouse look, Space jump (gamepad: sticks and A).
+Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepad: sticks, A, X.
 
 ## Tools
 
@@ -38,6 +38,12 @@ Controls: WASD move, mouse look, Space jump (gamepad: sticks and A).
   area 1, at the world origin, PlayerStart on the new-character tile 126,179). The actor stores everything it
   builds (instanced ground/walls/props/items/NPC markers, torch lights, item and spawn lists), so the game never
   reads the original files; select it and press "Rebuild From Map" after the map changes.
+  Verticality: areas the 2D game reached through teleport holes are moved under their entrance
+  (`Placements`, set per area in the script's `LAYOUTS`), joined by `AAstoniaLift` platforms and, where
+  wanted, hidden behind an `AAstoniaSecretDoor`; `HeightRegions` raise fortress walls and towers.
+  `Scriptsnalyze_links.py` lists an area's walkable sections and teleports to plan this.
+- `Scripts\shots.ps1 name=X,Y,Z,Yaw ...` runs the game and saves a screenshot from each spot
+  (`-AstoniaGoto` / `-AstoniaShot`, development builds only).
 - `Scripts\create_world.py` recreates an empty World Partition `L_World` (sky, sun, fog, PlayerStart; no terrain) if it is missing:
   `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>\Scripts\create_world.py"`
 
