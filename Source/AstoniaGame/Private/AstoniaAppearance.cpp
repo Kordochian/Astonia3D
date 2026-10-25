@@ -247,6 +247,10 @@ void UAstoniaAppearanceComponent::ApplyGroom(EAstoniaGroomKind Kind, FName Style
 	Groom->AttachToComponent(Head, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 	Groom->SetRelativeTransform(FTransform::Identity);
 	Groom->SetGroomAsset(Asset, Binding);
+	// The lower-detail hair (cards / helmet LODs) is not fitted by our bindings and drops to the neck
+	// a few metres from the camera, so always draw the strands. Far NPCs hide their hair instead
+	// (AAstoniaNpc::GroomDistance).
+	Groom->SetForcedLOD(0);
 
 	static TSoftObjectPtr<UMaterialInterface> HairMaterial{FSoftObjectPath(HairMaterialPath)};
 	if (UMaterialInterface* Parent = HairMaterial.LoadSynchronous())

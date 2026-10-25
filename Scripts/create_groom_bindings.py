@@ -10,13 +10,14 @@ import unreal
 
 GROOMS = "/MetaHumanCharacter/Optional/Grooms/GroomAssets"
 KINDS = ["Hair", "Eyebrows", "Beards", "Mustaches"]
-# Grooms are authored on this head; a binding can transfer them onto a face of a different shape.
-SOURCE_HEAD = "/MetaHumanCharacter/Optional/Grooms/GroomMesh/MH_Groom_Head.MH_Groom_Head"
-# character: (face mesh, transfer from SOURCE_HEAD). Checked by screenshots 2026-10-25: the male face
-# needs no transfer (with it the hair floats above the head), the female face needs it.
+# Each groom is authored on one of several reference heads; Core Data ships a binding per groom
+# (Grooms/Bindings/<kind>/<style>_Binding) whose source mesh names that head. Like MetaHuman's own
+# assembly, our bindings transfer the groom from that head onto each character's face.
+BINDINGS = "/MetaHumanCharacter/Optional/Grooms/Bindings"
+FALLBACK_HEAD = "/MetaHumanCharacter/Optional/Grooms/GroomMesh/MH_Groom_Head.MH_Groom_Head"
 FACES = {
-    "MH_DefaultMale": ("/Game/MetaHumans/MH_DefaultMale/MH_DefaultMale/Face/SKM_MH_DefaultMale_FaceMesh", False),
-    "MH_DefaultFemale": ("/Game/MetaHumans/MH_DefaultFemale/MH_DefaultFemale/Face/SKM_MH_DefaultFemale_FaceMesh", True),
+    "MH_DefaultMale": "/Game/MetaHumans/MH_DefaultMale/MH_DefaultMale/Face/SKM_MH_DefaultMale_FaceMesh",
+    "MH_DefaultFemale": "/Game/MetaHumans/MH_DefaultFemale/MH_DefaultFemale/Face/SKM_MH_DefaultFemale_FaceMesh",
 }
 CONTENT_DIR = unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_content_dir())
 rebuild = "--rebuild" in " ".join(sys.argv)
@@ -25,9 +26,17 @@ only = next((a.split("=", 1)[1] for a in " ".join(sys.argv).split() if a.startsw
 # The Core Data folder is not in the asset registry of a commandlet, so list the style folders on disk.
 GROOMS_DIR = os.path.join(unreal.Paths.convert_relative_path_to_full(unreal.Paths.engine_dir()),
                           "Plugins/MetaHuman/MetaHumanCharacter/Content/Optional/Grooms/GroomAssets")
-source = unreal.load_asset(SOURCE_HEAD)
+fallback = unreal.load_asset(FALLBACK_HEAD)
+
+
+def authoring_head(kind, style):
+    shipped = unreal.load_asset("%s/%s/%s_Binding" % (BINDINGS, kind, style))
+    head = shipped.get_editor_property("source_skeletal_mesh") if shipped else None
+    return head or fallback
+
+
 made = skipped = failed = 0
-for character, (face_path, transfer) in FACES.items():
+for character, face_path in FACES.items():
     if only and character != only:
         continue
     face = unreal.load_asset(face_path)
@@ -46,7 +55,7 @@ for character, (face_path, transfer) in FACES.items():
             if not groom:
                 failed += 1
                 continue
-            binding = unreal.GroomLibrary.create_new_groom_binding_asset_with_path(target, groom, face, 100, source if transfer else None, 0)
+            binding = unreal.GroomLibrary.create_new_groom_binding_asset_with_path(target, groom, face, 100, authoring_head(kind, style), 0)
             if binding:
                 unreal.EditorAssetLibrary.save_asset(target)
                 made += 1
