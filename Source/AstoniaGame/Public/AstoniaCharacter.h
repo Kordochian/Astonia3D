@@ -6,11 +6,10 @@
 
 class USpringArmComponent;
 class UCameraComponent;
-class UStaticMeshComponent;
 
 /**
- * Player character with a free third-person orbit camera. Until real art exists the body is an
- * engine cylinder; stats, combat and equipment get added as components in later phases.
+ * Player character with a free third-person orbit camera. The body is Epic's UE5 mannequin until
+ * Astonia's own character art exists; stats, combat and equipment get added in later phases.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaCharacter : public ACharacter
@@ -41,7 +40,4 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UCameraComponent> FollowCamera;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	TObjectPtr<UStaticMeshComponent> PlaceholderBody;
 };

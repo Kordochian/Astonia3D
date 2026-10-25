@@ -1,8 +1,9 @@
 #include "AstoniaCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/StaticMeshComponent.h"
-#include "Engine/StaticMesh.h"
+#include "Animation/AnimInstance.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -37,16 +38,14 @@ AAstoniaCharacter::AAstoniaCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	// Placeholder body: the engine cylinder (1 m tall, 1 m wide, centred) scaled to the capsule.
-	PlaceholderBody = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlaceholderBody"));
-	PlaceholderBody->SetupAttachment(GetCapsuleComponent());
-	PlaceholderBody->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	PlaceholderBody->SetRelativeScale3D(FVector(0.8f, 0.8f, 1.9f));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
-	if (Cylinder.Succeeded())
-	{
-		PlaceholderBody->SetStaticMesh(Cylinder.Object);
-	}
+	// Body: Epic's UE5 mannequin (free with the engine, from the Third Person template resources) with
+	// its unarmed locomotion animation blueprint. Mesh feet at the capsule bottom, facing +X.
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Body(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> Anim(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"));
+	USkeletalMeshComponent* BodyMesh = GetMesh();
+	if (Body.Succeeded()) BodyMesh->SetSkeletalMesh(Body.Object);
+	if (Anim.Succeeded()) BodyMesh->SetAnimInstanceClass(Anim.Class);
+	BodyMesh->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -96.f), FRotator(0.f, -90.f, 0.f));
 }
 
 void AAstoniaCharacter::BeginPlay()

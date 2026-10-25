@@ -2,7 +2,9 @@
 
 A 3D open-world rebuild of Astonia 3.5 in Unreal Engine 5.8.3. Game rules and world data come from the
 community 3.5 server in `F:\After_Astonia\source_codes\astonia_community_server35-main`. No original
-sprites or sounds are used: everything visual is a placeholder until new art exists.
+sprites or sounds are used: everything visual is a placeholder until new art exists. The player body is
+Epic's UE5 mannequin (`Content/Characters/Mannequins`, copied from the engine's Third Person template
+resources; free to use in Unreal Engine projects under the UE EULA).
 
 Based on the Astonia 3 engine by Daniel Brockhaus - https://brockhaus.org (required credit, also drawn
 on the in-game HUD).
