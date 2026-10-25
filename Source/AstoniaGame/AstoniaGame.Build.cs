@@ -21,6 +21,7 @@ public class AstoniaGame : ModuleRules
 			"Slate",
 			"SlateCore",
 			"HairStrandsCore",
+			"RHI",
 			"AstoniaCore"
 		});
 	}

@@ -10,6 +10,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Misc/CommandLine.h"
+#include "RHI.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -127,17 +128,39 @@ void AAstoniaCharacter::BeginPlay()
 		FTimerHandle Timer;
 		// -AstoniaShotUI includes menus and the HUD (plain "shot showui" at window size).
 		const bool bUI = FParse::Param(FCommandLine::Get(), TEXT("AstoniaShotUI"));
+		bRecordPerf = FParse::Param(FCommandLine::Get(), TEXT("AstoniaPerf"));
 		GetWorldTimerManager().SetTimer(Timer, [this, bUI]()
 		{
+			LogPerf();
 			if (APlayerController* PC = Cast<APlayerController>(Controller)) PC->ConsoleCommand(bUI ? TEXT("shot showui") : TEXT("HighResShot 1280x720"));
 		}, Delay, false);
 	}
 #endif
 }
 
+void AAstoniaCharacter::LogPerf()
+{
+	if (!bRecordPerf || FrameMs.IsEmpty()) return;
+	TArray<float> Sorted = FrameMs;
+	Sorted.Sort();
+	float Sum = 0.f, GpuSum = 0.f;
+	for (float V : FrameMs) Sum += V;
+	for (float V : GpuMs) GpuSum += V;
+	UE_LOG(LogAstoniaCore, Display, TEXT("AstoniaPerf: %d frames, frame avg %.2f ms (p95 %.2f ms), GPU avg %.2f ms"),
+		FrameMs.Num(), Sum / FrameMs.Num(), Sorted[FMath::Min(Sorted.Num() - 1, int32(Sorted.Num() * 0.95f))], GpuMs.IsEmpty() ? 0.f : GpuSum / GpuMs.Num());
+}
+
 void AAstoniaCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (bRecordPerf)
+	{
+		// The last 120 frames before the screenshot (development builds, -AstoniaPerf).
+		if (FrameMs.Num() >= 120) FrameMs.RemoveAt(0);
+		if (GpuMs.Num() >= 120) GpuMs.RemoveAt(0);
+		FrameMs.Add(DeltaSeconds * 1000.f);
+		GpuMs.Add(FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+	}
 	if (!Route.IsEmpty() && GetWorld()->GetTimeSeconds() > RouteTime) StepRoute();
 }
 

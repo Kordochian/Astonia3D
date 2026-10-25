@@ -44,6 +44,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astonia")
 	EAstoniaNpcRole NpcRole = EAstoniaNpcRole::Monster;
 
+	/** Level of detail (cm from the camera): animate, show hair, show the name tag. */
+	UPROPERTY(EditAnywhere, Category = "Astonia|Performance")
+	float AnimateDistance = 6000.f;
+
+	UPROPERTY(EditAnywhere, Category = "Astonia|Performance")
+	float GroomDistance = 2500.f;
+
+	UPROPERTY(EditAnywhere, Category = "Astonia|Performance")
+	float TagDistance = 3000.f;
+
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UTextRenderComponent> NameTag;

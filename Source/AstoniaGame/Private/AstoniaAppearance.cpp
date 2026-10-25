@@ -162,6 +162,19 @@ void UAstoniaAppearanceComponent::ApplyMetaHuman(USkeletalMeshComponent* Driver)
 	ApplyMetaHumanLook();
 }
 
+bool UAstoniaAppearanceComponent::WasBodyRecentlyRendered(float Seconds) const
+{
+	return MetaBody ? MetaBody->WasRecentlyRendered(Seconds) : true;
+}
+
+void UAstoniaAppearanceComponent::SetGroomsVisible(bool bVisible)
+{
+	for (const TPair<EAstoniaGroomKind, TObjectPtr<UGroomComponent>>& Groom : Grooms)
+	{
+		if (Groom.Value && Groom.Value->IsVisible() != bVisible) Groom.Value->SetVisibility(bVisible);
+	}
+}
+
 void UAstoniaAppearanceComponent::RefreshLook()
 {
 	ApplyMetaHumanLook();

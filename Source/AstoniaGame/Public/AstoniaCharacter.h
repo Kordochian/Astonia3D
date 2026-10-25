@@ -38,6 +38,12 @@ protected:
 
 private:
 	void StepRoute();
+	void LogPerf();
+
+	/** -AstoniaPerf: frame and GPU times of the last frames, logged ("AstoniaPerf") before the screenshot. */
+	bool bRecordPerf = false;
+	TArray<float> FrameMs;
+	TArray<float> GpuMs;
 
 	TArray<FVector2D> Route;
 	int32 RouteIndex = 0;

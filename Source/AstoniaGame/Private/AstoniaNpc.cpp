@@ -78,12 +78,24 @@ void AAstoniaNpc::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	if (!Cam) return;
+
+	// Level of detail: unseen or far NPCs stop animating (the hidden mannequin drives the MetaHuman, so
+	// it would otherwise always tick), far ones drop hair and name tag.
+	const float Dist = FVector::Dist(GetActorLocation(), Cam->GetCameraLocation());
+	const bool bSeen = Appearance->WasBodyRecentlyRendered(0.3f);
+	const bool bAnimate = bSeen && Dist < AnimateDistance;
+	if (GetMesh()->IsComponentTickEnabled() != bAnimate) GetMesh()->SetComponentTickEnabled(bAnimate);
+	Appearance->SetGroomsVisible(Dist < GroomDistance);
+	const bool bTag = bSeen && Dist < TagDistance;
+	if (NameTag->IsVisible() != bTag) NameTag->SetVisibility(bTag);
+	if (NpcRole == EAstoniaNpcRole::QuestGiver && QuestMarker->IsVisible() != bSeen) QuestMarker->SetVisibility(bSeen);
+	if (!bTag) return;
+
 	// Keep the name tag and marker turned to the camera.
-	if (const APlayerCameraManager* Cam = UGameplayStatics::GetPlayerCameraManager(this, 0))
-	{
-		const FVector ToCam = Cam->GetCameraLocation() - NameTag->GetComponentLocation();
-		const FRotator Facing(0.f, ToCam.Rotation().Yaw, 0.f);
-		NameTag->SetWorldRotation(Facing);
-		QuestMarker->SetWorldRotation(Facing);
-	}
+	const FVector ToCam = Cam->GetCameraLocation() - NameTag->GetComponentLocation();
+	const FRotator Facing(0.f, ToCam.Rotation().Yaw, 0.f);
+	NameTag->SetWorldRotation(Facing);
+	QuestMarker->SetWorldRotation(Facing);
 }

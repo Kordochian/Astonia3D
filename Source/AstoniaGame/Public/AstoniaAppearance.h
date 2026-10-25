@@ -191,6 +191,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Astonia")
 	void Apply();
 
+	/** True if the visible body was drawn in the last Seconds (the animation driver itself is hidden). */
+	bool WasBodyRecentlyRendered(float Seconds) const;
+
+	/** Shows or hides the hair, brows and beard (grooms are the costliest part of a character). */
+	void SetGroomsVisible(bool bVisible);
+
 	UFUNCTION(BlueprintCallable, Category = "Astonia")
 	void SetPiece(EAstoniaAppearanceSlot Slot, FName Piece);
 

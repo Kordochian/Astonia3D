@@ -67,6 +67,17 @@ AAstoniaBuilding::AAstoniaBuilding()
 		ConstructorHelpers::FObjectFinder<UStaticMesh> Mesh(Info.Mesh);
 		if (Mesh.Succeeded()) Layer->SetStaticMesh(Mesh.Object);
 		if (Kit == int32(EAstoniaKit::Blocker)) Layer->SetVisibility(false);
+		// Performance: floors (slabs flush with the ground) cast no shadows; small decoration fades out.
+		const bool bFloor = Kit == int32(EAstoniaKit::Ground) || (Kit >= int32(EAstoniaKit::Grass) && Kit <= int32(EAstoniaKit::Flagstone));
+		if (bFloor || Kit == int32(EAstoniaKit::Blocker)) Layer->SetCastShadow(false);
+		if (Kit == int32(EAstoniaKit::Decor) || Kit == int32(EAstoniaKit::DecorRound) || Kit == int32(EAstoniaKit::Glow) || Kit == int32(EAstoniaKit::Cloth))
+		{
+			Layer->SetCullDistances(7000, 9000);
+		}
+		else if (Kit == int32(EAstoniaKit::Rock))
+		{
+			Layer->SetCullDistances(18000, 22000);
+		}
 		KitLayers.Add(Layer);
 	}
 
@@ -139,6 +150,9 @@ void AAstoniaBuilding::AddLight(FVector Location, float Intensity, float Radius,
 	Light->SetAttenuationRadius(Radius);
 	Light->SetLightColor(Color);
 	Light->SetCastShadows(false);
+	// Torches only matter near the viewer: fade them out instead of shading the whole village.
+	Light->MaxDrawDistance = 5000.f;
+	Light->MaxDistanceFadeRange = 1500.f;
 	AddInstanceComponent(Light);
 	Light->RegisterComponent();
 }
