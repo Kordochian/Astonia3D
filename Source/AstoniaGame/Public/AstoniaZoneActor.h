@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "AstoniaNpc.h"
 #include "AstoniaZoneActor.generated.h"
 
 class UDataTable;
@@ -60,6 +61,16 @@ struct FAstoniaZoneSpawn
 	/** Attackable (no CF_NOATTACK / CF_IMMORTAL). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astonia")
 	bool bHostile = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astonia")
+	EAstoniaNpcRole Role = EAstoniaNpcRole::Monster;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astonia")
+	FString DisplayName;
+
+	/** CF_FEMALE: uses the female body. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Astonia")
+	bool bFemale = false;
 };
 
 /**
@@ -153,6 +164,9 @@ class ASTONIAGAME_API AAstoniaZoneActor : public AActor
 public:
 	AAstoniaZoneActor();
 
+	/** Spawns the 3D NPCs (CharacterRoles) from Spawns. */
+	virtual void BeginPlay() override;
+
 	/** Centre of a tile in actor space, at surface floor height. */
 	static FVector TileToLocal(int32 X, int32 Y);
 
@@ -200,6 +214,14 @@ public:
 	/** Where a new character starts, in tiles (server: 126,179 in Cameron, the castle courtyard). */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
 	FIntPoint StartTile = FIntPoint(126, 179);
+
+	/** NPCs of these roles appear as 3D characters (AAstoniaNpc) at play; the rest stay markers. */
+	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
+	TArray<EAstoniaNpcRole> CharacterRoles = {EAstoniaNpcRole::QuestGiver, EAstoniaNpcRole::Merchant, EAstoniaNpcRole::Thief};
+
+	/** Character templates (name prefixes) that count as thieves: Lydia's thieves in the west woods. */
+	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
+	TArray<FString> ThiefTemplates = {TEXT("wood_thief")};
 
 	UPROPERTY(VisibleAnywhere, Category = "Astonia|Content")
 	TArray<FAstoniaZoneItem> Items;

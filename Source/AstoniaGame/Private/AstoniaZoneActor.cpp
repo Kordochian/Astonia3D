@@ -134,6 +134,26 @@ TArray<UHierarchicalInstancedStaticMeshComponent*> AAstoniaZoneActor::Layers() c
 	return {Ground.Get(), Walls.Get(), Roofs.Get(), Props.Get(), ItemMeshes.Get(), NpcMarkers.Get()};
 }
 
+void AAstoniaZoneActor::BeginPlay()
+{
+	Super::BeginPlay();
+	if (!HasAuthority()) return;
+
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	for (const FAstoniaZoneSpawn& Spawn : Spawns)
+	{
+		if (!CharacterRoles.Contains(Spawn.Role)) continue;
+		const FVector Location = GetActorTransform().TransformPosition(Spawn.Location + FVector(0, 0, 100.f));
+		// The original NPCs mostly face the viewer (south-east); turn them that way.
+		const FRotator Facing(0.f, GetActorRotation().Yaw + 90.f, 0.f);
+		if (AAstoniaNpc* Npc = GetWorld()->SpawnActor<AAstoniaNpc>(Location, Facing, Params))
+		{
+			Npc->Setup(Spawn.Character, Spawn.DisplayName, Spawn.Role, Spawn.bFemale);
+		}
+	}
+}
+
 FVector AAstoniaZoneActor::TileToLocal(int32 X, int32 Y)
 {
 	return FVector((X + 0.5f) * AstoniaTileSize, (Y + 0.5f) * AstoniaTileSize, 0.f);
@@ -466,9 +486,23 @@ void AAstoniaZoneActor::RebuildFromMap()
 					const FAstoniaCharacterRow* Row = FindTemplate<FAstoniaCharacterRow>(CharsDT, Tile.Character, Zone, RowName);
 					MissingChars += Row == nullptr;
 					const bool bHostile = Row && !Row->HasFlag(TEXT("CF_NOATTACK")) && !Row->HasFlag(TEXT("CF_IMMORTAL"));
-					Spawns.Add({RowName, FIntPoint(X, Y), P, bHostile});
-					AddInstance(NpcMarkers, FTransform(FQuat::Identity, P + FVector(0, 0, 95.f), FVector(0.8f, 0.8f, 1.9f)),
-						bHostile ? Hostile : Friendly);
+					EAstoniaNpcRole NpcRole = EAstoniaNpcRole::Monster;
+					if (ThiefTemplates.ContainsByPredicate([&](const FString& Prefix) { return Tile.Character.StartsWith(Prefix); }))
+					{
+						NpcRole = EAstoniaNpcRole::Thief;
+					}
+					else if (Row && !bHostile && Row->HasFlag(TEXT("CF_HASNAME")))
+					{
+						NpcRole = Row->Driver == 72 ? EAstoniaNpcRole::Merchant : EAstoniaNpcRole::QuestGiver;  // 72: trader driver
+					}
+					FAstoniaZoneSpawn& Spawn = Spawns.Add_GetRef({RowName, FIntPoint(X, Y), P, bHostile, NpcRole});
+					Spawn.DisplayName = Row ? Row->DisplayName : Tile.Character;
+					Spawn.bFemale = Row && Row->HasFlag(TEXT("CF_FEMALE"));
+					if (!CharacterRoles.Contains(NpcRole))
+					{
+						AddInstance(NpcMarkers, FTransform(FQuat::Identity, P + FVector(0, 0, 95.f), FVector(0.8f, 0.8f, 1.9f)),
+							bHostile ? Hostile : Friendly);
+					}
 				}
 			}
 		}
