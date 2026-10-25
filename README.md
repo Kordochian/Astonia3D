@@ -25,6 +25,7 @@ Conventions: 1 Astonia tile = 200 cm (`AstoniaTileSize`), an area is 256x256 til
    `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" AstoniaUE5Editor Win64 Development -Project="F:\After_Astonia\UE_port\AstoniaUE5\AstoniaUE5.uproject"`
 2. Open `AstoniaUE5.uproject`. It starts in `/Game/Maps/L_World` (World Partition open world). Press Play.
 
+On first start a character creator opens (name, body, skin, eyes, hair, beard; saved in `Saved/SaveGames`).
 Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepad: sticks, A, X.
 
 ## Tools

@@ -54,8 +54,19 @@ void AAstoniaNpc::Setup(FName InTemplate, const FString& InDisplayName, EAstonia
 	Template = InTemplate;
 	NpcRole = InRole;
 
-	Appearance->Appearance.Skin = Skin;
-	Appearance->Appearance.bFemale = bFemale;
+	// Until each NPC gets its own look, vary hair, hair colour and skin shade by template name.
+	static const FName MaleHair[] = {"Hair_S_Casual", "Hair_S_Messy", "Hair_S_SlickBack", "Hair_S_BrushCut", "Hair_M_Layered", "Hair_S_RecedeMessy"};
+	static const FName FemaleHair[] = {"Hair_M_BobStraight", "Hair_L_Straight", "Hair_S_LowPonytail", "Hair_S_Updo", "Hair_M_Layered", "Hair_S_UpdoBraids"};
+	static const FName Beards[] = {NAME_None, "Beard_S_Stubble", "Beard_M_Stubble", NAME_None, "Beard_S_Full", "Goatee_M_Pointed"};
+	const uint32 Hash = GetTypeHash(InTemplate.ToString());
+	FAstoniaAppearance& A = Appearance->Appearance;
+	A.Skin = Skin;
+	A.bFemale = bFemale;
+	A.HairStyle = bFemale ? FemaleHair[Hash % 6] : MaleHair[Hash % 6];
+	A.Beard = bFemale ? NAME_None : Beards[(Hash / 7) % 6];
+	A.HairMelanin = 0.15f + 0.85f * float((Hash / 13) % 8) / 7.f;
+	A.HairRedness = 0.1f + 0.5f * float((Hash / 17) % 4) / 3.f;
+	A.SkinShade = 0.5f + 0.75f * float((Hash / 19) % 6) / 5.f;
 	Appearance->Apply();
 
 	NameTag->SetText(FText::FromString(InDisplayName));

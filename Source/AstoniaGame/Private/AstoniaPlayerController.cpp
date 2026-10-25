@@ -1,7 +1,15 @@
 #include "AstoniaPlayerController.h"
+#include "AstoniaAppearance.h"
 #include "AstoniaCharacter.h"
 #include "AstoniaInteractable.h"
+#include "AstoniaSaveGame.h"
+#include "SAstoniaCharacterCreator.h"
+#include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 #include "EngineUtils.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -142,4 +150,91 @@ void AAstoniaPlayerController::OnJumpStarted()
 void AAstoniaPlayerController::OnJumpCompleted()
 {
 	if (ACharacter* Char = GetPawn<ACharacter>()) Char->StopJumping();
+}
+
+void AAstoniaPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	AAstoniaCharacter* Char = Cast<AAstoniaCharacter>(InPawn);
+	if (!Char || !IsLocalController()) return;
+
+	// Development screenshots (-AstoniaGoto) skip the creator unless -AstoniaCreator asks for it.
+	const TCHAR* Cmd = FCommandLine::Get();
+	const bool bForce = FParse::Param(Cmd, TEXT("AstoniaCreator"));
+	const bool bSkip = !bForce && FCString::Strifind(Cmd, TEXT("AstoniaGoto=")) != nullptr;
+
+	if (UAstoniaSaveGame* Save = UAstoniaSaveGame::Load())
+	{
+		CharacterName = Save->CharacterName;
+		Char->GetAppearance()->Appearance = Save->Appearance;
+		Char->GetAppearance()->Apply();
+		if (!bForce) return;
+	}
+	if (!bSkip) CreateCharacter();
+}
+
+void AAstoniaPlayerController::CreateCharacter()
+{
+	AAstoniaCharacter* Char = GetPawn<AAstoniaCharacter>();
+	if (!Char || CreatorWidget.IsValid() || !GEngine || !GEngine->GameViewport) return;
+
+	// Close-up from the front.
+	USpringArmComponent* Boom = Char->GetCameraBoom();
+	SavedArmLength = Boom->TargetArmLength;
+	SavedSocketOffset = Boom->SocketOffset;
+	Boom->TargetArmLength = 230.f;
+	Boom->SocketOffset = FVector(0.f, -60.f, 50.f);
+	// Turn the character to face the camera (the control rotation is reset during possession).
+	Char->SetActorRotation(FRotator(0.f, GetControlRotation().Yaw + 180.f, 0.f));
+	SetControlRotation(FRotator(-8.f, GetControlRotation().Yaw, 0.f));
+	SetIgnoreMoveInput(true);
+	SetIgnoreLookInput(true);
+
+	TWeakObjectPtr<AAstoniaPlayerController> Self(this);
+	CreatorWidget = SNew(SAstoniaCharacterCreator)
+		.Appearance(Char->GetAppearance())
+		.InitialName(CharacterName)
+		.OnRotate_Lambda([Self](float Degrees) { if (Self.IsValid()) Self->RotatePreview(Degrees); })
+		.OnDone_Lambda([Self](const FString& Name) { if (Self.IsValid()) Self->FinishCharacter(Name); });
+	GEngine->GameViewport->AddViewportWidgetContent(CreatorWidget.ToSharedRef(), 10);
+
+	FInputModeUIOnly Mode;
+	Mode.SetWidgetToFocus(CreatorWidget);
+	SetInputMode(Mode);
+	SetShowMouseCursor(true);
+}
+
+void AAstoniaPlayerController::RotatePreview(float Degrees)
+{
+	if (APawn* P = GetPawn()) P->AddActorWorldRotation(FRotator(0.f, Degrees, 0.f));
+}
+
+void AAstoniaPlayerController::FinishCharacter(const FString& Name)
+{
+	AAstoniaCharacter* Char = GetPawn<AAstoniaCharacter>();
+	if (GEngine && GEngine->GameViewport && CreatorWidget.IsValid())
+	{
+		GEngine->GameViewport->RemoveViewportWidgetContent(CreatorWidget.ToSharedRef());
+	}
+	CreatorWidget.Reset();
+
+	CharacterName = Name;
+	if (Char)
+	{
+		UAstoniaSaveGame* Save = Cast<UAstoniaSaveGame>(UGameplayStatics::CreateSaveGameObject(UAstoniaSaveGame::StaticClass()));
+		Save->CharacterName = Name;
+		Save->Appearance = Char->GetAppearance()->Appearance;
+		Save->Save();
+
+		Char->GetCameraBoom()->TargetArmLength = SavedArmLength;
+		Char->GetCameraBoom()->SocketOffset = SavedSocketOffset;
+		Char->SetActorRotation(FRotator(0.f, GetControlRotation().Yaw, 0.f));
+		SetControlRotation(FRotator(-10.f, GetControlRotation().Yaw, 0.f));
+	}
+
+	SetIgnoreMoveInput(false);
+	SetIgnoreLookInput(false);
+	SetInputMode(FInputModeGameOnly());
+	SetShowMouseCursor(false);
 }

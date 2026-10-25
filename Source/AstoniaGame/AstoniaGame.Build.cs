@@ -18,6 +18,9 @@ public class AstoniaGame : ModuleRules
 			"GameplayTags",
 			"GameplayTasks",
 			"UMG",
+			"Slate",
+			"SlateCore",
+			"HairStrandsCore",
 			"AstoniaCore"
 		});
 	}

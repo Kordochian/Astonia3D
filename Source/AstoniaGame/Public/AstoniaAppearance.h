@@ -101,7 +101,56 @@ struct ASTONIAGAME_API FAstoniaAppearance
 	/** Rows of DT_Pieces by slot. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
 	TMap<EAstoniaAppearanceSlot, FName> Pieces;
+
+	// --- MetaHuman look (character creator) ---
+
+	/** Skin brightness on the MetaHuman's baked skin: 1 = as assembled, lower = darker. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	float SkinShade = 1.f;
+
+	/** Skin colour saturation: 1 = as assembled. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	float SkinSaturation = 1.f;
+
+	/** MetaHuman grooms by name (folders in /MetaHumanCharacter/Optional/Grooms/GroomAssets); None = bald / none. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	FName HairStyle = TEXT("Hair_S_Casual");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	FName Eyebrows = TEXT("Eyebrows_M_Natural");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	FName Beard;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	FName Mustache;
+
+	/** Hair colour for every groom, as MetaHuman sets it: melanin 0 = blond .. 1 = black, redness 0..1. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	float HairMelanin = 0.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia|MetaHuman")
+	float HairRedness = 0.25f;
 };
+
+/** The MetaHuman groom kinds the creator offers, with the names of every style installed. */
+UENUM(BlueprintType)
+enum class EAstoniaGroomKind : uint8
+{
+	Hair,
+	Eyebrows,
+	Beards,
+	Mustaches,
+};
+
+namespace AstoniaGrooms
+{
+	/** Style names of a kind (from MetaHuman Creator Core Data), sorted. */
+	ASTONIAGAME_API const TArray<FName>& Styles(EAstoniaGroomKind Kind);
+
+	/** "Hair_M_BobStraight" -> "Bob Straight (medium)". */
+	ASTONIAGAME_API FText DisplayName(FName Style);
+}
 
 /**
  * Dresses the owner's body mesh: puts the default human skin on it and layers piece models on top.
@@ -151,6 +200,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Astonia")
 	void SetSkin(FName Skin);
 
+	/** Re-applies skin tone, eye colour, hair styles and colour without rebuilding the body. */
+	UFUNCTION(BlueprintCallable, Category = "Astonia")
+	void RefreshLook();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -168,6 +221,12 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<USkeletalMeshComponent> MetaFace;
+
+	void ApplyMetaHumanLook();
+	void ApplyGroom(EAstoniaGroomKind Kind, FName Style);
+
+	UPROPERTY(Transient)
+	TMap<EAstoniaGroomKind, TObjectPtr<class UGroomComponent>> Grooms;
 
 	UPROPERTY(Transient)
 	TObjectPtr<USkeletalMesh> MaleBody;

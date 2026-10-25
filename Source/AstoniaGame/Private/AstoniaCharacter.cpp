@@ -110,9 +110,11 @@ void AAstoniaCharacter::BeginPlay()
 		float Delay = 3.f;
 		FParse::Value(FCommandLine::Get(), TEXT("AstoniaShotDelay="), Delay);
 		FTimerHandle Timer;
-		GetWorldTimerManager().SetTimer(Timer, [this]()
+		// -AstoniaShotUI includes menus and the HUD (plain "shot showui" at window size).
+		const bool bUI = FParse::Param(FCommandLine::Get(), TEXT("AstoniaShotUI"));
+		GetWorldTimerManager().SetTimer(Timer, [this, bUI]()
 		{
-			if (APlayerController* PC = Cast<APlayerController>(Controller)) PC->ConsoleCommand(TEXT("HighResShot 1280x720"));
+			if (APlayerController* PC = Cast<APlayerController>(Controller)) PC->ConsoleCommand(bUI ? TEXT("shot showui") : TEXT("HighResShot 1280x720"));
 		}, Delay, false);
 	}
 #endif
