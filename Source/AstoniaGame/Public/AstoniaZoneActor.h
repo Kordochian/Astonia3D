@@ -223,19 +223,19 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
 	TArray<FString> ThiefTemplates = {TEXT("wood_thief")};
 
-	/** Skins (DT_Skins rows) for named characters by template, e.g. knight_castle_mage -> MageRobe. */
+	/** Default skins (DT_Skins rows) for named characters by template, e.g. knight_castle_lydia -> Fair. */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Look")
 	TMap<FName, FName> CharacterSkins;
 
 	/** Skins other characters pick from (by template name, so a character always looks the same). */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Look")
-	TArray<FName> QuestGiverSkins = {TEXT("Peasant"), TEXT("TownsfolkBlue"), TEXT("TownsfolkRed"), TEXT("TownsfolkGreen")};
+	TArray<FName> QuestGiverSkins = {TEXT("Fair"), TEXT("Light"), TEXT("Olive"), TEXT("Tan"), TEXT("Brown"), TEXT("Dark")};
 
 	UPROPERTY(EditAnywhere, Category = "Astonia|Look")
-	TArray<FName> MerchantSkins = {TEXT("Merchant")};
+	TArray<FName> MerchantSkins = {TEXT("Olive")};
 
 	UPROPERTY(EditAnywhere, Category = "Astonia|Look")
-	TArray<FName> ThiefSkins = {TEXT("ThiefLeather")};
+	TArray<FName> ThiefSkins = {TEXT("Light"), TEXT("Tan"), TEXT("Brown")};
 
 	UPROPERTY(VisibleAnywhere, Category = "Astonia|Content")
 	TArray<FAstoniaZoneItem> Items;

@@ -48,13 +48,13 @@ LAYOUTS = {
             ((120, 165), (121, 171), 1000),   # gate towers either side of the north entrance
             ((125, 165), (126, 171), 1000),
         ],
-        # Named characters' looks (DT_Skins rows, Scripts/create_skins.py); others pick from a pool.
+        # Named characters' default skins (DT_Skins rows, Scripts/create_skins.py); others pick from a pool.
         "skins": {
-            "knight_castle_mage": "MageRobe",      # Gwendylon
-            "knight_castle_fighter": "KnightPlate", # Yoakin
-            "knight_castle_lydia": "NobleDress",
-            "knight_castle_james": "Drunkard",
-            "knight_castle_nook": "Guard",
+            "knight_castle_mage": "Fair",      # Gwendylon
+            "knight_castle_fighter": "Tan",    # Yoakin
+            "knight_castle_lydia": "Fair",
+            "knight_castle_james": "Light",
+            "knight_castle_nook": "Olive",
         },
     },
 }

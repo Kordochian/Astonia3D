@@ -1,5 +1,5 @@
 #include "AstoniaCharacter.h"
-#include "AstoniaSkin.h"
+#include "AstoniaAppearance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
@@ -40,19 +40,21 @@ AAstoniaCharacter::AAstoniaCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	// Body: Epic's UE5 mannequin (free with the engine, from the Third Person template resources) with
-	// its unarmed locomotion animation blueprint. Mesh feet at the capsule bottom, facing +X.
+	// its unarmed locomotion animation blueprint. Mesh feet at the capsule bottom, facing +X. The
+	// appearance component swaps in the female body and the skin material.
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Body(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
 	static ConstructorHelpers::FClassFinder<UAnimInstance> Anim(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"));
 	USkeletalMeshComponent* BodyMesh = GetMesh();
 	if (Body.Succeeded()) BodyMesh->SetSkeletalMesh(Body.Object);
 	if (Anim.Succeeded()) BodyMesh->SetAnimInstanceClass(Anim.Class);
 	BodyMesh->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -96.f), FRotator(0.f, -90.f, 0.f));
+
+	Appearance = CreateDefaultSubobject<UAstoniaAppearanceComponent>(TEXT("Appearance"));
 }
 
 void AAstoniaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	AstoniaSkin::Apply(GetMesh(), AstoniaSkin::Find(Skin));
 
 #if !UE_BUILD_SHIPPING
 	FString Goto;

@@ -1,5 +1,5 @@
 #include "AstoniaNpc.h"
-#include "AstoniaSkin.h"
+#include "AstoniaAppearance.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Components/CapsuleComponent.h"
@@ -22,13 +22,13 @@ AAstoniaNpc::AAstoniaNpc()
 	AutoPossessAI = EAutoPossessAI::Disabled;
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Manny(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> Quinn(TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn_Simple.SKM_Quinn_Simple"));
 	static ConstructorHelpers::FClassFinder<UAnimInstance> Anim(TEXT("/Game/Characters/Mannequins/Anims/Unarmed/ABP_Unarmed"));
 	USkeletalMeshComponent* Body = GetMesh();
 	if (Manny.Succeeded()) Body->SetSkeletalMesh(Manny.Object);
-	if (Quinn.Succeeded()) FemaleBody = Quinn.Object;
 	if (Anim.Succeeded()) Body->SetAnimInstanceClass(Anim.Class);
 	Body->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -96.f), FRotator(0.f, -90.f, 0.f));
+
+	Appearance = CreateDefaultSubobject<UAstoniaAppearanceComponent>(TEXT("Appearance"));
 
 	NameTag = CreateDefaultSubobject<UTextRenderComponent>(TEXT("NameTag"));
 	NameTag->SetupAttachment(RootComponent);
@@ -54,10 +54,9 @@ void AAstoniaNpc::Setup(FName InTemplate, const FString& InDisplayName, EAstonia
 	Template = InTemplate;
 	NpcRole = InRole;
 
-	USkeletalMeshComponent* Body = GetMesh();
-	if (bFemale && FemaleBody) Body->SetSkeletalMesh(FemaleBody);
-
-	AstoniaSkin::Apply(Body, AstoniaSkin::Find(Skin));
+	Appearance->Appearance.Skin = Skin;
+	Appearance->Appearance.bFemale = bFemale;
+	Appearance->Apply();
 
 	NameTag->SetText(FText::FromString(InDisplayName));
 	NameTag->SetTextRenderColor(NpcRole == EAstoniaNpcRole::Thief ? FColor(255, 90, 70) : FColor::White);

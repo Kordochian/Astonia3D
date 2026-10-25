@@ -7,39 +7,36 @@
 class USkeletalMeshComponent;
 
 /**
- * A look for the UE5 mannequin (Manny / Quinn): drives the mannequin material's paint parameters.
- * Rows live in /Game/Characters/Skins/DT_Skins (made by Scripts/create_skins.py, editable in the editor).
+ * A default body for the UE5 mannequin (Manny / Quinn): human skin tone with undergarments, drawn by
+ * /Game/Characters/Skins/M_HumanSkin. Everything else a character wears (hair, clothes, armour,
+ * jewellery, weapons) is a separate model from the appearance system (AstoniaAppearance.h).
+ * Rows live in /Game/Characters/Skins/DT_Skins (Scripts/create_skins.py, editable in the editor).
  */
 USTRUCT(BlueprintType)
 struct ASTONIAGAME_API FAstoniaSkinRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	/** Main colour ("Paint Tint"). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
-	FLinearColor Body = FLinearColor(0.5f, 0.5f, 0.5f);
+	FLinearColor SkinTone = FLinearColor(0.72f, 0.50f, 0.38f);
 
-	/** Emblem colour on the chest ("LogoTint"). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
-	FLinearColor Trim = FLinearColor(0.8f, 0.7f, 0.3f);
+	FLinearColor UnderwearColor = FLinearColor(0.85f, 0.83f, 0.78f);
 
-	/** 0 = cloth or leather, 1 = metal plate. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia", meta = (ClampMin = "0", ClampMax = "1"))
-	float Metallic = 0.f;
+	/** Default eye colour for eye pieces (Eyes slot). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FLinearColor EyeColor = FLinearColor(0.35f, 0.25f, 0.15f);
 
-	/** 0 = polished, 1 = matte. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia", meta = (ClampMin = "0", ClampMax = "1"))
-	float Roughness = 0.7f;
+	/** Default hair colour for hair pieces that use it (Hair, Beard slots). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FLinearColor HairColor = FLinearColor(0.30f, 0.18f, 0.10f);
 };
 
 namespace AstoniaSkin
 {
-	/** Path of the skin table. */
-	ASTONIAGAME_API const TCHAR* TablePath();
+	/** Puts the human skin material on every slot of a mannequin body. Does nothing when Skin is null. */
+	ASTONIAGAME_API void Apply(USkeletalMeshComponent* Body, const FAstoniaSkinRow* Skin, bool bFemale);
 
-	/** Applies a skin row to every material slot of a mannequin mesh. Does nothing when Skin is null. */
-	ASTONIAGAME_API void Apply(USkeletalMeshComponent* Mesh, const FAstoniaSkinRow* Skin);
-
-	/** Looks up a row in the skin table (loads it on first use). */
+	/** Looks up a row in DT_Skins (loads the table on first use). */
 	ASTONIAGAME_API const FAstoniaSkinRow* Find(FName Skin);
 }

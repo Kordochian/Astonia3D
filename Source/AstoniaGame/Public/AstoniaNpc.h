@@ -5,6 +5,7 @@
 #include "AstoniaNpc.generated.h"
 
 class UTextRenderComponent;
+class UAstoniaAppearanceComponent;
 
 UENUM(BlueprintType)
 enum class EAstoniaNpcRole : uint8
@@ -22,7 +23,7 @@ enum class EAstoniaNpcRole : uint8
 /**
  * A 3D NPC standing where the original map placed it. For now it only stands there with an idle
  * animation, a name tag and (for quest givers) a "!" marker; dialogue and AI come in M3.
- * Body: Epic's UE5 mannequin (Manny, or Quinn for female characters) with a skin from DT_Skins.
+ * Body: Epic's UE5 mannequin (Manny, or Quinn for female characters) dressed by an appearance component.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaNpc : public ACharacter
@@ -32,7 +33,7 @@ class ASTONIAGAME_API AAstoniaNpc : public ACharacter
 public:
 	AAstoniaNpc();
 
-	/** Call right after spawning. Skin = row of DT_Skins (see AstoniaSkin.h). */
+	/** Call right after spawning. Skin = row of DT_Skins (default human body, see AstoniaSkin.h). */
 	void Setup(FName InTemplate, const FString& InDisplayName, EAstoniaNpcRole InRole, bool bFemale, FName Skin);
 
 	virtual void Tick(float DeltaSeconds) override;
@@ -50,6 +51,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UTextRenderComponent> QuestMarker;
 
-	UPROPERTY()
-	TObjectPtr<USkeletalMesh> FemaleBody;
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAstoniaAppearanceComponent> Appearance;
 };

@@ -6,10 +6,11 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UAstoniaAppearanceComponent;
 
 /**
- * Player character with a free third-person orbit camera. The body is Epic's UE5 mannequin until
- * Astonia's own character art exists; stats, combat and equipment get added in later phases.
+ * Player character with a free third-person orbit camera. The body is Epic's UE5 mannequin with the
+ * default human skin; clothes, armour, hair and the like are pieces of the appearance component.
  */
 UCLASS()
 class ASTONIAGAME_API AAstoniaCharacter : public ACharacter
@@ -34,9 +35,7 @@ protected:
 public:
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	/** Look of the player's mannequin (row of DT_Skins). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
-	FName Skin = TEXT("Adventurer");
+	UAstoniaAppearanceComponent* GetAppearance() const { return Appearance; }
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Components")
@@ -44,4 +43,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	TObjectPtr<UCameraComponent> FollowCamera;
+
+	/** Default human skin plus worn pieces (hair, clothes, armour, jewellery, weapons). */
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	TObjectPtr<UAstoniaAppearanceComponent> Appearance;
 };
