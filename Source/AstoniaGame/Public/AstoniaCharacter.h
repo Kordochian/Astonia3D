@@ -27,8 +27,9 @@ public:
 
 protected:
 	/**
-	 * Development only: -AstoniaGoto=X,Y,Z,Yaw puts the player there on start, -AstoniaShot takes a
-	 * 1280x720 screenshot three seconds later (Saved/Screenshots). Used to check builds headlessly.
+	 * Development only: -AstoniaGoto=X,Y,Z,Yaw[,Pitch] puts the player there on start, -AstoniaArm=<cm>
+	 * sets the camera distance (0 = from the head), -AstoniaShot takes a
+	 * 1280x720 screenshot three seconds later (-AstoniaShotDelay=<s> to wait longer; Saved/Screenshots). Used to check builds headlessly.
 	 */
 	virtual void BeginPlay() override;
 

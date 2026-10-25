@@ -7,9 +7,11 @@ in /Game/Characters/MetaHumans, and with --finish rigs, textures and assembles t
   commandlet crashes (the skin texture graph needs the editor's GPU).
 - --finish uses Epic's MetaHuman cloud service (Auto-Rig "Joints only", Download Texture Sources), then
   assembles (Optimized, Medium) into /Game/MetaHumans/<name>. It needs an Epic sign-in done once in the
-  editor (open the character there; it asks).
+  editor (open the character there; it asks). Assembly bakes textures on the GPU, so --finish must run in
+  the full editor, not the -run=pythonscript commandlet; --quit closes the editor afterwards:
 
-  UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>/Scripts/create_metahumans.py [--finish]"
+  UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>/Scripts/create_metahumans.py"
+  UnrealEditor.exe AstoniaUE5.uproject -ExecutePythonScript="<project>/Scripts/create_metahumans.py --finish --quit --only=MH_DefaultMale"
 """
 import sys
 import unreal
@@ -26,6 +28,10 @@ CHARACTERS = {
 mh = unreal.get_editor_subsystem(unreal.MetaHumanCharacterEditorSubsystem)
 tools = unreal.AssetToolsHelpers.get_asset_tools()
 finish = "--finish" in " ".join(sys.argv)
+quit_after = "--quit" in " ".join(sys.argv)
+retexture = "--retexture" in " ".join(sys.argv)  # download textures again (after a skin change)
+# --only=<name>: one character per editor session (assembling both at once can run out of memory).
+only = next((a.split("=", 1)[1] for a in " ".join(sys.argv).split() if a.startswith("--only=")), None)
 
 
 def load_or_create(name):
@@ -51,6 +57,10 @@ def shape(name, character, gender, height):
 
 
 def complete(name, character):
+    # Re-commit the skin (tone and underwear as set in MetaHuman Creator) so the face textures are
+    # synthesized from it; without this the assembled face stays untextured grey.
+    mh.commit_skin_settings(character, character.get_editor_property("skin_settings"))
+
     rig = unreal.MetaHumanCharacterAutoRiggingRequestParams()
     rig.blocking = True
     rig.report_progress = False
@@ -58,10 +68,11 @@ def complete(name, character):
     mh.request_auto_rigging(character, rig)
     unreal.log("create_metahumans: %s auto-rig done" % name)
 
-    tex = unreal.MetaHumanCharacterTextureRequestParams()
-    tex.blocking = True
-    tex.report_progress = False
-    mh.request_texture_sources(character, tex)
+    if retexture or not character.get_editor_property("has_high_resolution_textures"):
+        tex = unreal.MetaHumanCharacterTextureRequestParams()
+        tex.blocking = True
+        tex.report_progress = False
+        mh.request_texture_sources(character, tex)
     unreal.log("create_metahumans: %s textures done" % name)
 
     if not mh.can_build_meta_human(character, True):
@@ -73,11 +84,19 @@ def complete(name, character):
     params.absolute_build_path = "%s/%s" % (BUILD_FOLDER, name)
     params.common_folder_path = "%s/Common" % BUILD_FOLDER
     params.enable_wardrobe_item_validation = False
-    mh.build_meta_human(character=character, params=params)
+    try:
+        mh.build_meta_human(character=character, params=params)
+    except RuntimeError as e:
+        # The face control rigs log "Cannot break link" warnings while being copied; Python turns
+        # those into an exception although the assembly itself succeeds.
+        unreal.log_warning("create_metahumans: %s assembly reported: %s" % (name, str(e).splitlines()[0]))
+    unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
     unreal.log("create_metahumans: assembled %s into %s/%s" % (name, BUILD_FOLDER, name))
 
 
 for name, (gender, height) in CHARACTERS.items():
+    if only and name != only:
+        continue
     character, created = load_or_create(name)
     if not mh.try_add_object_to_edit(character):
         raise RuntimeError("%s is open in another editor" % name)
@@ -90,3 +109,6 @@ for name, (gender, height) in CHARACTERS.items():
         mh.remove_object_to_edit(character)
     unreal.EditorAssetLibrary.save_asset("%s/%s" % (FOLDER, name))
     unreal.log("create_metahumans: saved %s" % name)
+
+if quit_after:
+    unreal.SystemLibrary.quit_editor()

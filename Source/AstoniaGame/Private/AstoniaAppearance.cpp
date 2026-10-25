@@ -28,6 +28,49 @@ UAstoniaAppearanceComponent::UAstoniaAppearanceComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PieceTable = TSoftObjectPtr<UDataTable>(FSoftObjectPath(TEXT("/Game/Characters/Appearance/DT_Pieces.DT_Pieces")));
+	MaleMetaHumanBody = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/MetaHumans/MH_DefaultMale/MH_DefaultMale/Body/SKM_MH_DefaultMale_BodyMesh.SKM_MH_DefaultMale_BodyMesh")));
+	MaleMetaHumanFace = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/MetaHumans/MH_DefaultMale/MH_DefaultMale/Face/SKM_MH_DefaultMale_FaceMesh.SKM_MH_DefaultMale_FaceMesh")));
+	FemaleMetaHumanBody = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/MetaHumans/MH_DefaultFemale/MH_DefaultFemale/Body/SKM_MH_DefaultFemale_BodyMesh.SKM_MH_DefaultFemale_BodyMesh")));
+	FemaleMetaHumanFace = TSoftObjectPtr<USkeletalMesh>(FSoftObjectPath(TEXT("/Game/MetaHumans/MH_DefaultFemale/MH_DefaultFemale/Face/SKM_MH_DefaultFemale_FaceMesh.SKM_MH_DefaultFemale_FaceMesh")));
+}
+
+void UAstoniaAppearanceComponent::ApplyMetaHuman(USkeletalMeshComponent* Driver)
+{
+	USkeletalMesh* BodyMesh = (Appearance.bFemale ? FemaleMetaHumanBody : MaleMetaHumanBody).LoadSynchronous();
+	USkeletalMesh* FaceMesh = (Appearance.bFemale ? FemaleMetaHumanFace : MaleMetaHumanFace).LoadSynchronous();
+	if (!BodyMesh)
+	{
+		Driver->SetVisibility(true, false);
+		if (MetaBody) MetaBody->DestroyComponent();
+		if (MetaFace) MetaFace->DestroyComponent();
+		MetaBody = MetaFace = nullptr;
+		return;
+	}
+
+	// The mannequin keeps playing the animation but is not drawn; the MetaHuman follows its bones.
+	Driver->SetVisibility(false, false);
+	Driver->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+
+	auto Follow = [this, Driver](TObjectPtr<USkeletalMeshComponent>& Part, USkeletalMesh* Mesh)
+	{
+		if (!Mesh)
+		{
+			if (Part) Part->DestroyComponent();
+			Part = nullptr;
+			return;
+		}
+		if (!Part)
+		{
+			Part = NewObject<USkeletalMeshComponent>(GetOwner());
+			Part->SetupAttachment(Driver);
+			Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Part->RegisterComponent();
+		}
+		Part->SetSkeletalMesh(Mesh);
+		Part->SetLeaderPoseComponent(Driver);
+	};
+	Follow(MetaBody, BodyMesh);
+	Follow(MetaFace, FaceMesh);
 }
 
 void UAstoniaAppearanceComponent::BeginPlay()
@@ -54,6 +97,7 @@ void UAstoniaAppearanceComponent::Apply()
 		if (Body->GetSkeletalMeshAsset() != Wanted) Body->SetSkeletalMesh(Wanted);
 	}
 	AstoniaSkin::Apply(Body, AstoniaSkin::Find(Appearance.Skin), Appearance.bFemale);
+	ApplyMetaHuman(Body);
 
 	for (const TPair<EAstoniaAppearanceSlot, TObjectPtr<UMeshComponent>>& Old : Spawned)
 	{

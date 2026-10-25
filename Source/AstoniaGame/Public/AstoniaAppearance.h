@@ -121,6 +121,23 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Astonia")
 	TSoftObjectPtr<UDataTable> PieceTable;
 
+	/**
+	 * Smooth MetaHuman bodies and faces (Scripts/create_metahumans.py, assembled into /Game/MetaHumans).
+	 * When set, the mannequin only drives the animation (hidden) and these follow it; when empty, the
+	 * mannequin shows with the M_HumanSkin default skin.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Astonia|MetaHuman")
+	TSoftObjectPtr<USkeletalMesh> MaleMetaHumanBody;
+
+	UPROPERTY(EditAnywhere, Category = "Astonia|MetaHuman")
+	TSoftObjectPtr<USkeletalMesh> MaleMetaHumanFace;
+
+	UPROPERTY(EditAnywhere, Category = "Astonia|MetaHuman")
+	TSoftObjectPtr<USkeletalMesh> FemaleMetaHumanBody;
+
+	UPROPERTY(EditAnywhere, Category = "Astonia|MetaHuman")
+	TSoftObjectPtr<USkeletalMesh> FemaleMetaHumanFace;
+
 	/** Rebuilds the body and every piece from Appearance. */
 	UFUNCTION(BlueprintCallable, Category = "Astonia")
 	void Apply();
@@ -143,6 +160,14 @@ private:
 
 	UPROPERTY(Transient)
 	TMap<EAstoniaAppearanceSlot, TObjectPtr<UMeshComponent>> Spawned;
+
+	void ApplyMetaHuman(USkeletalMeshComponent* Driver);
+
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMeshComponent> MetaBody;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMeshComponent> MetaFace;
 
 	UPROPERTY(Transient)
 	TObjectPtr<USkeletalMesh> MaleBody;
