@@ -38,15 +38,14 @@ LAYOUTS = {
             ("Crypt cavern", (101, 211), (195, 231), 2, 1200, True),   # behind a secret door in the tunnels
             ("Skeleton cave", (38, 232), (85, 83), -1, 1800, False),
         ],
-        # The castle courtyard where new characters start (server: tile 126,179) becomes the fortress.
-        "heights": [
-            ((110, 165), (146, 191), 800),
-            ((110, 165), (113, 168), 1200),
-            ((143, 165), (146, 168), 1200),
-            ((110, 188), (113, 191), 1200),
-            ((143, 188), (146, 191), 1200),
-            ((120, 165), (121, 171), 1000),   # gate towers either side of the north entrance
-            ((125, 165), (126, 171), 1000),
+        "heights": [],
+        # The fort where new characters start (server: tile 126,179) is hand-built by
+        # Scripts/build_fortress.py: the zone leaves these tiles to it (min, max, keep ground).
+        "replaced": [
+            ((112, 165), (142, 193), True),
+            ((143, 170), (148, 193), True),
+            ((114, 168), (134, 191), False),
+            ((134, 176), (145, 191), False),
         ],
         # Named characters' default skins (DT_Skins rows, Scripts/create_skins.py); others pick from a pool.
         "skins": {
@@ -127,7 +126,16 @@ for lo, hi, h in layout["heights"]:
     r.set_editor_property("wall_height", float(h))
     heights.append(r)
 
+replaced = []
+for lo, hi, keep_ground in layout.get("replaced", []):
+    r = unreal.AstoniaReplacedRegion()
+    r.set_editor_property("min", point(lo))
+    r.set_editor_property("max", point(hi))
+    r.set_editor_property("keep_ground", keep_ground)
+    replaced.append(r)
+
 zone.set_editor_property("is_spatially_loaded", False)
+zone.set_editor_property("replaced_regions", replaced)
 zone.set_editor_property("map_file", os.path.join(ZONES, ZONE, MAP_NAME).replace("\\", "/"))
 zone.set_editor_property("zone", ZONE)
 zone.set_editor_property("placements", placements)

@@ -122,6 +122,26 @@ struct FAstoniaHeightRegion
 	float WallHeight = 800.f;
 };
 
+/**
+ * Part of the surface that a hand-built structure (AAstoniaBuilding, e.g. Cameron's fortress) replaces:
+ * no walls, props, roofs or item meshes are generated there. Items and spawns are still recorded.
+ */
+USTRUCT(BlueprintType)
+struct FAstoniaReplacedRegion
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FIntPoint Min = FIntPoint::ZeroValue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	FIntPoint Max = FIntPoint::ZeroValue;
+
+	/** Keep the ground tiles (false: the structure lays its own floor). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Astonia")
+	bool bKeepGround = true;
+};
+
 /** A built lift shaft, for the script that places the lift and secret door actors. */
 USTRUCT(BlueprintType)
 struct FAstoniaShaft
@@ -210,6 +230,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
 	TArray<FAstoniaSectionPlacement> Placements;
+
+	/** Surface regions a hand-built structure replaces (Cameron: the fortress). */
+	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")
+	TArray<FAstoniaReplacedRegion> ReplacedRegions;
 
 	/** Where a new character starts, in tiles (server: 126,179 in Cameron, the castle courtyard). */
 	UPROPERTY(EditAnywhere, Category = "Astonia|Layout")

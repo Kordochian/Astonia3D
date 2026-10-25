@@ -43,10 +43,17 @@ Controls: WASD move, mouse look, Space jump, E use (lifts, secret doors). Gamepa
   reads the original files; select it and press "Rebuild From Map" after the map changes.
   Verticality: areas the 2D game reached through teleport holes are moved under their entrance
   (`Placements`, set per area in the script's `LAYOUTS`), joined by `AAstoniaLift` platforms and, where
-  wanted, hidden behind an `AAstoniaSecretDoor`; `HeightRegions` raise fortress walls and towers.
-  `Scripts\analyze_links.py` lists an area's walkable sections and teleports to plan this.
+  wanted, hidden behind an `AAstoniaSecretDoor`; `HeightRegions` raise walls in part of an area.
+  `ReplacedRegions` leave tiles to a hand-built structure. `Scripts\analyze_links.py` lists an area's
+  walkable sections and teleports to plan this.
+- `Scripts\build_fortress.py` (run after `build_zone.py`) builds Cameron's fortress, the start area, as an
+  `AAstoniaBuilding`: instanced placeholder kit pieces (`EAstoniaKit`: stone, roofs, wood, foliage, glow...)
+  laid out from `cameron.map` (wall lines, gate, galleries, buttresses, trees, props, braziers, floors) plus
+  towers, a gatehouse, stairs and a wall walk all the way round. Materials `M_Kit` / `MI_KitStone` /
+  `MI_KitPlain` / `M_KitGlow` (stone courses and flagstones in world space, so new art can replace layers later).
 - `Scripts\shots.ps1 name=X,Y,Z,Yaw ...` runs the game and saves a screenshot from each spot
-  (`-AstoniaGoto` / `-AstoniaShot`, development builds only).
+  (`-AstoniaGoto` / `-AstoniaShot`, development builds only). `-AstoniaFly` hovers for aerial views and
+  `-AstoniaRoute=X,Y;X,Y;...` walks waypoints and logs where it got to (checks stairs and doorways).
 - `Scripts\create_world.py` recreates an empty World Partition `L_World` (sky, sun, fog, PlayerStart; no terrain) if it is missing:
   `UnrealEditor-Cmd.exe AstoniaUE5.uproject -run=pythonscript -script="<project>\Scripts\create_world.py"`
 

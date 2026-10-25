@@ -376,6 +376,20 @@ void AAstoniaZoneActor::RebuildFromMap()
 		return H;
 	};
 
+	// Replaced[i]: 0 = built here, 1 = a structure replaces it but the ground stays, 2 = replaced with the ground.
+	TArray<uint8> Replaced;
+	Replaced.SetNumZeroed(N * N);
+	for (const FAstoniaReplacedRegion& R : ReplacedRegions)
+	{
+		for (int32 Y = FMath::Max(R.Min.Y, 0); Y <= FMath::Min(R.Max.Y, N - 1); Y++)
+		{
+			for (int32 X = FMath::Max(R.Min.X, 0); X <= FMath::Min(R.Max.X, N - 1); X++)
+			{
+				Replaced[Index(X, Y)] = FMath::Max<uint8>(Replaced[Index(X, Y)], R.bKeepGround ? 1 : 2);
+			}
+		}
+	}
+
 	// Engine basic shapes are 100 cm across and centred on their pivot.
 	const float S = AstoniaTileSize / 100.f;
 	int32 MissingChars = 0;
@@ -396,8 +410,18 @@ void AAstoniaZoneActor::RebuildFromMap()
 				const FVector P = TileToLocal(X + L.Offset.X, Y + L.Offset.Y) + FVector(0, 0, L.Z);
 				const bool bCasing = Casing.Contains({Level, I});
 				const float WallH = WallHeightAt(Level, X, Y);
+				const uint8 Replace = Level == 0 ? Replaced[I] : 0;
 
-				if (!NoFloor.Contains({Level, I}) && !bCasing)
+				if (Replace)
+				{
+					// A hand-built structure stands here: keep only the content lists (and the ground if asked).
+					if (Replace == 1)
+					{
+						AddInstance(Ground, FTransform(FQuat::Identity, P - FVector(0, 0, 10.f), FVector(S, S, 0.2f)),
+							Pick(GroundPalette, Tile.GroundSprite / 100));
+					}
+				}
+				else if (!NoFloor.Contains({Level, I}) && !bCasing)
 				{
 					FLinearColor C = Pick(GroundPalette, Tile.GroundSprite / 100);
 					if (EnumHasAnyFlags(Tile.Flags, EAstoniaMapFlag::Underwater)) C = Water;
@@ -406,7 +430,11 @@ void AAstoniaZoneActor::RebuildFromMap()
 					AddInstance(Ground, FTransform(FQuat::Identity, P - FVector(0, 0, 10.f), FVector(S, S, 0.2f)), C);
 				}
 
-				if (bCasing)
+				if (Replace)
+				{
+					// The structure brings its own walls and props.
+				}
+				else if (bCasing)
 				{
 					// Four thin walls around the shaft, open in the middle for the platform.
 					const float Thick = 0.1f;
@@ -428,7 +456,7 @@ void AAstoniaZoneActor::RebuildFromMap()
 						Pick(WallPalette, Tile.ForegroundSprite / 1000));
 				}
 
-				if (bBuildRoofs && Level == 0 && !bBlocked && EnumHasAnyFlags(Tile.Flags, EAstoniaMapFlag::Indoors) && !NoFloor.Contains({Level, I}))
+				if (bBuildRoofs && Level == 0 && !Replace && !bBlocked && EnumHasAnyFlags(Tile.Flags, EAstoniaMapFlag::Indoors) && !NoFloor.Contains({Level, I}))
 				{
 					AddInstance(Roofs, FTransform(FQuat::Identity, P + FVector(0, 0, WallH + 10.f), FVector(S, S, 0.2f)), Roof);
 				}
@@ -446,7 +474,7 @@ void AAstoniaZoneActor::RebuildFromMap()
 
 					// Holes and ladders inside this zone are replaced by lift shafts.
 					const bool bLocalTeleport = Kind == EAstoniaZoneItemKind::Teleport && Row && TeleportArea(*Row) == 0;
-					if (!bLocalTeleport && !bCasing)
+					if (!bLocalTeleport && !bCasing && !Replace)
 					{
 						FVector Size(0.6f, 0.6f, 0.6f);
 						switch (Kind)

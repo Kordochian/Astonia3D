@@ -30,8 +30,22 @@ protected:
 	 * Development only: -AstoniaGoto=X,Y,Z,Yaw[,Pitch] puts the player there on start, -AstoniaArm=<cm>
 	 * sets the camera distance (0 = from the head), -AstoniaShot takes a
 	 * 1280x720 screenshot three seconds later (-AstoniaShotDelay=<s> to wait longer; Saved/Screenshots). Used to check builds headlessly.
+	 * -AstoniaFly hovers at the spot; -AstoniaRoute=X,Y;X,Y;... walks the waypoints and logs where it got to
+	 * (LogAstoniaCore "AstoniaRoute"), to check that stairs and doorways can be walked.
 	 */
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
+
+private:
+	void StepRoute();
+
+	TArray<FVector2D> Route;
+	int32 RouteIndex = 0;
+	float RouteStuck = 0.f;
+	float RouteBest = MAX_flt;
+	float RouteTime = 0.f;
+
+protected:
 
 public:
 	UCameraComponent* GetFollowCamera() const { return FollowCamera; }

@@ -1,5 +1,6 @@
 #include "AstoniaCharacter.h"
 #include "AstoniaAppearance.h"
+#include "AstoniaCore.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
@@ -72,7 +73,21 @@ void AAstoniaCharacter::BeginPlay()
 				SetActorRotation(FRotator(0.f, Facing.Yaw, 0.f));
 				if (Controller) Controller->SetControlRotation(Facing);
 			}
+			// -AstoniaFly: hover at the spot (aerial screenshots).
+			if (FParse::Param(FCommandLine::Get(), TEXT("AstoniaFly"))) GetCharacterMovement()->SetMovementMode(MOVE_Flying);
 		}
+	}
+	FString RouteArg;
+	if (FParse::Value(FCommandLine::Get(), TEXT("AstoniaRoute="), RouteArg, false))
+	{
+		TArray<FString> Points;
+		RouteArg.ParseIntoArray(Points, TEXT(";"));
+		for (const FString& Point : Points)
+		{
+			FString X, Y;
+			if (Point.Split(TEXT(","), &X, &Y)) Route.Add(FVector2D(FCString::Atof(*X), FCString::Atof(*Y)));
+		}
+		RouteTime = GetWorld()->GetTimeSeconds() + 5.f;  // let the world settle first
 	}
 	FString SpawnBP;
 	if (FParse::Value(FCommandLine::Get(), TEXT("AstoniaSpawn="), SpawnBP, false))
@@ -118,6 +133,51 @@ void AAstoniaCharacter::BeginPlay()
 		}, Delay, false);
 	}
 #endif
+}
+
+void AAstoniaCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+	if (!Route.IsEmpty() && GetWorld()->GetTimeSeconds() > RouteTime) StepRoute();
+}
+
+void AAstoniaCharacter::StepRoute()
+{
+	if (!Route.IsValidIndex(RouteIndex))
+	{
+		UE_LOG(LogAstoniaCore, Display, TEXT("AstoniaRoute: finished at %s"), *GetActorLocation().ToString());
+		Route.Reset();
+		return;
+	}
+	const FVector Here = GetActorLocation();
+	const FVector2D Delta = Route[RouteIndex] - FVector2D(Here);
+	const float Dist = Delta.Size();
+	if (Dist < 60.f)
+	{
+		UE_LOG(LogAstoniaCore, Display, TEXT("AstoniaRoute: reached %d at %s"), RouteIndex, *Here.ToString());
+		RouteIndex++;
+		RouteStuck = 0.f;
+		RouteBest = MAX_flt;
+		return;
+	}
+	// Stuck = no 20 cm of progress towards the waypoint for 3 s of game time (timer catch-up calls in
+	// one frame add nothing).
+	const float Now = GetWorld()->GetTimeSeconds();
+	const float Step = Now - RouteTime;
+	RouteTime = Now;
+	if (Dist < RouteBest - 20.f)
+	{
+		RouteBest = Dist;
+		RouteStuck = 0.f;
+	}
+	else if ((RouteStuck += Step) > 3.f)
+	{
+		UE_LOG(LogAstoniaCore, Warning, TEXT("AstoniaRoute: stuck before %d at %s (mode %d, input ignored %d, controller %s)"), RouteIndex,
+			*Here.ToString(), int32(GetCharacterMovement()->MovementMode), IsMoveInputIgnored(), *GetNameSafe(Controller));
+		Route.Reset();
+		return;
+	}
+	AddMovementInput(FVector(Delta.X, Delta.Y, 0.f).GetSafeNormal());
 }
 
 void AAstoniaCharacter::DoMove(float Right, float Forward)
